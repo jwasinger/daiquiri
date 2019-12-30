@@ -14,32 +14,42 @@ export declare function input_size(): i32;
 @external("env", "input_data_copy")
 export declare function input_data_copy(outputOffset: i32, srcOffset: i32, length: i32): void;
 
+@external("env", "load_prestate")
+export declare function load_prestate(offset: i32);
+
 @external("env", "save_output")
 export declare function save_output(offset: i32): void;
 
 function deposit(input_data: usize, p_result_root: usize): void {
-    // input data is the merkle proof that the commitment (previously HASH(NULL)) produces a new state root
-    // construct the proof with the 
-
-    // HASH(NULLIFIER root + commitment root) == eth2.0 pre state
-
-    // NULLIFIER root is first SIZE_F
+    let p_prestate = new Uint8Array(SIZE_F).buffer as usize;
+    load_prestate(p_prestate);
 
     let p_nullifier_root = input_data;
 
     // last commitment proof
     let p_commitment_root = input_data + SIZE_F;
 
+    let p_tmp = new Uint8Array(SIZE_F).buffer as usize;
+    let p_computed_root = new Uint8Array(SIZE_F).buffer as usize;
+
     // copy the commitment root to the merkle proof root, HASH(NULL) to the merkle proof leaf
+    memcpy(p_tmp, p_commitment_leaf);
+    memcpy(p_commitment_leaf, NULL_HASH);
 
     // check that HASH(NULL) + proof_witnesses produces the current state root
+    compute_proof(p_proof, p_computed_root);
+    mimc_compress2(p_computed_root, p_commitment_root, p_computed_root);
 
-    let p_commitment_proof: usize = p_commitment_root + SIZE_F;
-
-    memcpy(p_commitment_proof + MERKLE_PROOF_LEAF_OFFSET, NULL_HASH);
-    memcpy(p_commitment_proof + MERKLE_PROOF_ROOT_OFFSET, 
+    if (!memcmp(p_computed_root, p_prestate)) {
+        throw new Error("invalid witnesses");
+    }
 
     // check that COMMITMENT + proof_witnesses produces the state root in the proof and update to the new state root
+
+    memcpy(p_commitment_proof + MERKLE_PROOF_LEAF_OFFSET, p_tmp);
+    compute_root(p_commitment_proof, tmp);
+
+    save_output(tmp);
 }
 
 function withdraw(input_data: usize, p_result_root: usize): void {

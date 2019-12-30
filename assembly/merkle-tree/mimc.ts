@@ -5,6 +5,9 @@ import { SIZE_F, memcpy } from "./util.ts";
 // TODO this should be set to 220
 const num_rounds = 220;
 
+const NULL_HASH: Array<u64> = ]
+0x7d3eb7ff691dba40, 0x1a34bf30e70eade2, 0x4a19a476fa41bb31, 0x2027777a0db98566];
+
 const round_constants: Array<u64> = [
 0x27b688d12488c5d4, 0xfb51f0d66065d8a2, 0x7c7c584d4f8f3759, 0x0fbe43c36a80e36d,
 0x55673f5751efc1c9, 0xde5c4a262e831395, 0xfc4eeee6618b1b7c, 0x0b1be1e55d1138dc,
