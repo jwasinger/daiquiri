@@ -17,18 +17,41 @@ export declare function input_data_copy(outputOffset: i32, srcOffset: i32, lengt
 @external("env", "save_output")
 export declare function save_output(offset: i32): void;
 
+function deposit(input_data: usize, p_result_root: usize): void {
+    // input data is the merkle proof that the commitment (previously HASH(NULL)) produces a new state root
+    // construct the proof with the 
+
+    // check that HASH(NULL) + proof_witnesses produces the current state root
+
+    // check that COMMITMENT + proof_witnesses produces the state root in the proof and update to the new state root
+}
+
+function withdraw(input_data: usize, p_result_root: usize): void {
+
+    // verify that the ZKP is valid, that the nullifier is a public input
+
+    // take the nullifier value from the ZKP and verify it was HASH(NULL) in the nullifier state root
+
+    // update the state root to reflect a non-NULL nullifier, pay out ether to recipient, (pay fees to a relayer?)
+}
+
 // TODO make all numbers in the proof expected to be passed in montgomery form
 export function main(): i32 {
     let input_data_len = input_size();
     let input_data_buff = new ArrayBuffer(input_data_len);
     input_data_copy(input_data_buff as usize, 0, input_data_len);
 
-    let result = new Uint8Array(SIZE_F);
-
     mimc_init();
 
-    if (verify_merkle_proof(input_data_buff as usize) != 0) {
-        result[0] = 1;
+    // first byte is selector. 0 => withdraw, 1 => deposit
+    let result = new Uint8Array(SIZE_F);
+
+    let selector: u8 = 0;
+
+    if (selector == SELECTOR_DEPOSIT) {
+        deposit(input_data_buff as usize + 1, result.buffer as usize);
+    } else if (selector == SELECTOR_WITHDRAW) {
+        withdraw(input_data_buff as usize + 1, result.buffer as usize);
     }
 
     save_output(result.buffer as usize);
