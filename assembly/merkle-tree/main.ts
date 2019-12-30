@@ -21,7 +21,23 @@ function deposit(input_data: usize, p_result_root: usize): void {
     // input data is the merkle proof that the commitment (previously HASH(NULL)) produces a new state root
     // construct the proof with the 
 
+    // HASH(NULLIFIER root + commitment root) == eth2.0 pre state
+
+    // NULLIFIER root is first SIZE_F
+
+    let p_nullifier_root = input_data;
+
+    // last commitment proof
+    let p_commitment_root = input_data + SIZE_F;
+
+    // copy the commitment root to the merkle proof root, HASH(NULL) to the merkle proof leaf
+
     // check that HASH(NULL) + proof_witnesses produces the current state root
+
+    let p_commitment_proof: usize = p_commitment_root + SIZE_F;
+
+    memcpy(p_commitment_proof + MERKLE_PROOF_LEAF_OFFSET, NULL_HASH);
+    memcpy(p_commitment_proof + MERKLE_PROOF_ROOT_OFFSET, 
 
     // check that COMMITMENT + proof_witnesses produces the state root in the proof and update to the new state root
 }

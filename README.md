@@ -1,4 +1,4 @@
-# MiMC Merkle Tree
+# Daiquiri - Proof of Concept Stateless Mixer for Eth 2.0
 
 Implementation of merkle proof verification in a Webassembly environment.  MiMC (citation) is chosen as the hash function and the tree format is binary.  The implementation is compatible with MiMC-Sponge implementation in the Circom library (citation).
 
