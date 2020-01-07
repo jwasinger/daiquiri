@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "test:relayer": "cd relayer && python3 test.py",
     "test": "node index.js tests/tests.yml",
     "gen_proof": "rm -rf build/proof && mkdir build/proof && npx snarkjs calculatewitness -c build/circuit/merkle_tree.json -i tests/circuit_input.json -w build/proof/witness.json --lo && snarkjs proof -w build/proof/witness.json --public build/proof/public.json --pk build/circuit/merkle_tree_proving_key.json -p build/proof/proof.json",
     "build:circuit:compile": "npx circom circuit/merkle_tree.circom -o build/circuit/merkle_tree.json && npx snarkjs info -c build/circuit/merkle_tree.json",
