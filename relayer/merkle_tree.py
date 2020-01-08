@@ -1,8 +1,17 @@
 import random
 import unittest
 import math
+import binascii
 
 from mimc import MiMC
+
+def count_to_8_bytes(count):
+  return binascii.hexlify(count.to_bytes(8, 'little')).decode()
+
+def num_to_hex(g1):
+  result = bytearray.fromhex(hex(int(g1))[2:].zfill(64))
+  result.reverse()
+  return binascii.hexlify(result).decode()
 
 def make_node(index, value):
     return { 'index': index, 'value': value }
@@ -17,7 +26,17 @@ class MerkleProof:
         self.selectors = selectors
 
     def serialize(self) -> str:
-        pass
+        root = num_to_hex(self.root)
+        index = count_to_8_bytes(self.index)
+        num_witnesses = count_to_8_bytes(20)
+
+        witnesses = ""
+        for witness in self.witnesses:
+            witnesses += num_to_hex(witness)
+
+        leaf = num_to_hex(self.leaf)
+
+        return root + index + num_witnesses + witnesses + leaf
 
     def verify(self) -> bool:
         index = self.index
@@ -51,11 +70,17 @@ class MerkleTree:
         self.hasher = hasher
         self.row_starts = [0, 1]
         self.values = {} # map of index in the bottom row to value
+        self.tree = None
 
         for i in range(1, self.depth):
             self.row_starts.append(self.row_starts[i] + 2**i)
 
-        # self.merkleize(indices, values)
+        # minor hack to set the initial NULL root
+        self.values = {0 : self.hasher.null() }
+        self.merkleize()
+
+    def get_root(self) -> int:
+        return self.tree[0]
 
     def contains(self, value: int) -> bool:
         leaf_index = value % 2**self.depth
@@ -148,10 +173,11 @@ class MerkleTree:
         self.tree = tree
 
     def get_proof(self, value: int) -> MerkleProof:
-        if not value in self.values:
+        row_index = value % 2**self.depth
+
+        if not row_index in self.values:
             raise Exception("can't get proof for value not in the tree")
 
-        row_index = value % 2**self.depth
         root = self.tree[0]
         witnesses = []
         selectors = []
@@ -196,6 +222,12 @@ class TestMerkleTree(unittest.TestCase):
         self.assertTrue(proof_1.verify())
         self.assertTrue(proof_0.verify())
         self.assertTrue(proof_3.verify())
+
+    def test_empty(self):
+        hasher = MiMC()
+        tree = MerkleTree(20, hasher)
+
+        # TODO test that an empty tree has correct root
 
 if __name__ == "__main__":
     unittest.main()
