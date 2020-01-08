@@ -1,5 +1,6 @@
 import random
 import unittest
+import math
 
 from mimc import MiMC
 
@@ -44,16 +45,32 @@ class MerkleProof:
         return True
 
 class MerkleTree:
-    def __init__(self, indices: [int], values: [int], depth: int, hasher):
+    def __init__(self, depth: int, hasher):
         self.depth = depth
         self.largest_index = int(2 ** (depth + 1) ) - 2
         self.hasher = hasher
         self.row_starts = [0, 1]
+        self.values = {} # map of index in the bottom row to value
 
         for i in range(1, self.depth):
             self.row_starts.append(self.row_starts[i] + 2**i)
 
-        self.merkleize(indices, values)
+        # self.merkleize(indices, values)
+
+    def contains(self, value: int) -> bool:
+        leaf_index = value % 2**self.depth
+        if leaf_index in self.values:
+            return True
+
+    def insert(self, value: int):
+        leaf_index = value % 2**self.depth
+        self.values[leaf_index] = value
+
+        # TODO: only re-computed the necessary nodes every time we add a new value
+        self.merkleize()
+
+    def insert_multi(self, values: [int]):
+        pass
 
     def get_tree_index(self, row_idx, lvl=None):
         if lvl == None:
@@ -76,7 +93,7 @@ class MerkleTree:
         return tree_idx - self.row_starts[-1]
 
     def get_parent_idx(self, tree_idx):
-        return int(tree_idx / 2)
+        return int(math.ceil(float(tree_idx) / 2.0)) - 1
 
     def hash_level(self, idxs, lvl):
         idxs = [{'index': index, 'value': value} for index, value in idxs.items()]
@@ -92,32 +109,34 @@ class MerkleTree:
 
 
     def pair_siblings(self, nodes):
+        # import pdb; pdb.set_trace()
         nodes = sorted(nodes, key = lambda x: x['index'])
         i = 0
         while i < len(nodes):
-            if self.get_row_idx(nodes[i]['index']) % 2 == 0:
+            row_idx = self.get_row_idx(nodes[i]['index'])
+            if row_idx % 2 == 0:
                 if i+1 < len(nodes) and nodes[i+1]['index'] == nodes[i]['index'] + 1:
                     yield(nodes[i], nodes[i + 1])
                     i += 2
                 else:
-                    yield (nodes[i], make_node(i + 1, self.hasher.null()))
+                    yield (nodes[i], make_node(row_idx + 1, self.hasher.null()))
                     i += 1
             else:
-                yield (make_node(i - 1, self.hasher.null()), nodes[i] )
+                yield (make_node(nodes[i]['index']- 1, self.hasher.null()), nodes[i] )
                 i += 1
 
-    def merkleize(self, indices: [int], values: [int]):
+    def merkleize(self):
         # lookup map for the hash at a given index (indexing in an array described
         # above)
         tree_levels = [{} for i in range(self.depth + 1)]
         tree = {}
 
-        if len(indices) == 0:
-            return { 0: self.hasher.null() }
+        if len(self.values.keys()) == 0:
+            return
 
-        for i in range(len(indices)):
-            tree_idx = i + int(2**(self.depth + 1) / 2) - 1 # add offset to start of bottom level
-            tree_levels[self.depth][tree_idx] = values[i]
+        for i, value in enumerate(self.values):
+            tree_idx = value + self.row_starts[-1]
+            tree_levels[self.depth][tree_idx] = value
 
         for lvl in reversed(range(0, self.depth)):
             tree_levels[lvl] = self.hash_level(tree_levels[lvl + 1], lvl + 1)
@@ -128,10 +147,15 @@ class MerkleTree:
 
         self.tree = tree
 
-    def compute_proof(self, row_index: int) -> MerkleProof:
+    def get_proof(self, value: int) -> MerkleProof:
+        if not value in self.values:
+            raise Exception("can't get proof for value not in the tree")
+
+        row_index = value % 2**self.depth
         root = self.tree[0]
         witnesses = []
         selectors = []
+
         index = self.get_tree_index(row_index)
         leaf = self.tree[index]
 
@@ -160,10 +184,18 @@ class MerkleTree:
 class TestMerkleTree(unittest.TestCase):
     def test_basic(self):
         hasher = MiMC()
-        tree = MerkleTree([0, 1], [1, 2], 20, hasher)
+        tree = MerkleTree(20, hasher)
 
-        proof_0 = tree.compute_proof(0)
+        for i in range(2**5):
+            tree.insert(i)
+
+        proof_0 = tree.get_proof(0)
+        proof_1 = tree.get_proof(1)
+        proof_3 = tree.get_proof(3)
+
+        self.assertTrue(proof_1.verify())
         self.assertTrue(proof_0.verify())
+        self.assertTrue(proof_3.verify())
 
 if __name__ == "__main__":
     unittest.main()
