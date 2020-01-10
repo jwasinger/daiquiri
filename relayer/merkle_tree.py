@@ -13,8 +13,16 @@ def num_to_hex(g1):
   result.reverse()
   return binascii.hexlify(result).decode()
 
+def byte_to_hex(g1):
+  result = bytearray.fromhex(hex(int(g1))[2:].zfill(2))
+  result.reverse()
+  return binascii.hexlify(result).decode()
+
 def make_node(index, value):
     return { 'index': index, 'value': value }
+
+def get_parent_idx(tree_idx):
+    return int(math.ceil(float(tree_idx) / 2.0)) - 1
 
 class MerkleProof:
     def __init__(self, root, leaf, index, witnesses, hasher, selectors):
@@ -30,20 +38,24 @@ class MerkleProof:
         index = count_to_8_bytes(self.index)
         num_witnesses = count_to_8_bytes(20)
 
+        serialized_selectors = ""
+        for selector in self.selectors:
+            serialized_selectors += byte_to_hex(selector)
+
         witnesses = ""
-        for witness in self.witnesses:
+        for witness in reversed(self.witnesses):
             witnesses += num_to_hex(witness)
 
         leaf = num_to_hex(self.leaf)
 
-        return root + index + num_witnesses + witnesses + leaf
+        selectors = list(map(lambda x: byte_to_hex(x), self.selectors))
+
+        return root + index + num_witnesses + "".join(selectors) + witnesses + leaf
 
     def verify(self) -> bool:
         index = self.index
         computed_root = None
         
-        # TODO assert len(selectors) == len(witnesses)
-
         if self.selectors[0] == 0:
             computed_root = self.hasher.hash(self.leaf, self.witnesses[0])
         else:
@@ -53,7 +65,7 @@ class MerkleProof:
             selector = self.selectors[i]
             witness = self.witnesses[i]
 
-            if selector % 2 == 0:
+            if selector == 0:
                 computed_root = self.hasher.hash(computed_root, witness)
             else:
                 computed_root = self.hasher.hash(witness, computed_root)
@@ -69,32 +81,41 @@ class MerkleTree:
         self.largest_index = int(2 ** (depth + 1) ) - 2
         self.hasher = hasher
         self.row_starts = [0, 1]
-        self.values = {} # map of index in the bottom row to value
-        self.tree = None
+
+        # TODO remove leaf nodes from tree, rename tree to intermediate nodes
+        self.leaves = {} # map of index in the bottom row to value
+        self.tree = {}
 
         for i in range(1, self.depth):
             self.row_starts.append(self.row_starts[i] + 2**i)
 
         # minor hack to set the initial NULL root
-        self.values = {0 : self.hasher.null() }
+        self.leaves = {0 : self.hasher.null() }
         self.merkleize()
+        self.leaves = {}
 
     def get_root(self) -> int:
         return self.tree[0]
 
     def contains(self, value: int) -> bool:
         leaf_index = value % 2**self.depth
-        if leaf_index in self.values:
+        if leaf_index in self.leaves.values():
             return True
 
-    def insert(self, value: int):
+    def insert(self, value: int) -> bool:
         leaf_index = value % 2**self.depth
-        self.values[leaf_index] = value
+
+        if leaf_index in self.leaves.keys():
+            return False
+
+        self.leaves[leaf_index] = value
 
         # TODO: only re-computed the necessary nodes every time we add a new value
         self.merkleize()
 
-    def insert_multi(self, values: [int]):
+        return True
+
+    def insert_multi(self, leaves: [int]):
         pass
 
     def get_tree_index(self, row_idx, lvl=None):
@@ -117,8 +138,6 @@ class MerkleTree:
 
         return tree_idx - self.row_starts[-1]
 
-    def get_parent_idx(self, tree_idx):
-        return int(math.ceil(float(tree_idx) / 2.0)) - 1
 
     def hash_level(self, idxs, lvl):
         idxs = [{'index': index, 'value': value} for index, value in idxs.items()]
@@ -126,7 +145,7 @@ class MerkleTree:
         result = {}
 
         for left, right in siblings:
-            parent_idx = self.get_parent_idx(left['index'])
+            parent_idx = get_parent_idx(left['index'])
             parent_value = self.hasher.hash(left['value'], right['value'])
             result[parent_idx] = parent_value
 
@@ -134,7 +153,6 @@ class MerkleTree:
 
 
     def pair_siblings(self, nodes):
-        # import pdb; pdb.set_trace()
         nodes = sorted(nodes, key = lambda x: x['index'])
         i = 0
         while i < len(nodes):
@@ -156,12 +174,12 @@ class MerkleTree:
         tree_levels = [{} for i in range(self.depth + 1)]
         tree = {}
 
-        if len(self.values.keys()) == 0:
+        if self.leaves == {}:
             return
 
-        for i, value in enumerate(self.values):
-            tree_idx = value + self.row_starts[-1]
-            tree_levels[self.depth][tree_idx] = value
+        for index in self.leaves:
+            tree_idx = index + self.row_starts[-1]
+            tree_levels[self.depth][tree_idx] = self.leaves[index]
 
         for lvl in reversed(range(0, self.depth)):
             tree_levels[lvl] = self.hash_level(tree_levels[lvl + 1], lvl + 1)
@@ -175,7 +193,7 @@ class MerkleTree:
     def get_proof(self, value: int) -> MerkleProof:
         row_index = value % 2**self.depth
 
-        if not row_index in self.values:
+        if not row_index in self.leaves.keys():
             raise Exception("can't get proof for value not in the tree")
 
         root = self.tree[0]
@@ -183,7 +201,7 @@ class MerkleTree:
         selectors = []
 
         index = self.get_tree_index(row_index)
-        leaf = self.tree[index]
+        leaf = self.leaves[row_index]
 
         for lvl in reversed(range(self.depth)):
             row_index = self.get_row_idx(index)
@@ -203,7 +221,7 @@ class MerkleTree:
 
                 selectors.append(1)
 
-            index = self.get_parent_idx(index)
+            index = get_parent_idx(index)
 
         return MerkleProof(root, leaf, index, witnesses, self.hasher, selectors)
 
@@ -219,8 +237,8 @@ class TestMerkleTree(unittest.TestCase):
         proof_1 = tree.get_proof(1)
         proof_3 = tree.get_proof(3)
 
-        self.assertTrue(proof_1.verify())
         self.assertTrue(proof_0.verify())
+        self.assertTrue(proof_1.verify())
         self.assertTrue(proof_3.verify())
 
     def test_empty(self):
@@ -228,6 +246,8 @@ class TestMerkleTree(unittest.TestCase):
         tree = MerkleTree(20, hasher)
 
         # TODO test that an empty tree has correct root
+        # TODO test insertion of duplicate/colliding values in the tree
+
 
 if __name__ == "__main__":
     unittest.main()

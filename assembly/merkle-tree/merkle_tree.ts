@@ -4,6 +4,9 @@ import { bn128_frm_zero, bn128_fr_mul, bn128_frm_fromMontgomery, bn128_frm_toMon
 
 import { SIZE_F, memcmp } from "./util.ts";
 
+@external("env", "debug_printMemHex")
+export declare function debug_mem(pos: i32, len: i32): void;
+
 // bn128 point size
 export const ROOT_OFFSET = 0;
 
@@ -14,6 +17,34 @@ export function verify_merkle_proof(p_proof: usize): u32 {
     compute_root(p_proof, p_computed_root);
 
     return memcmp(p_computed_root, p_proof_root);
+}
+
+// convert all the field elements in the proof to montgomery form
+export function merkle_proof_init(p_proof: usize): void {
+    let root = ( p_proof as usize ); 
+    // debug_mem(root, SIZE_F);
+    bn128_frm_toMontgomery(root, root);
+
+    // debug_mem(0, SIZE_F * 2);
+
+    let num_witnesses = load<u64>(p_proof + 40) as u64;
+
+    let p_selectors: usize = root + 48;
+    let selector = load<u8>(p_selectors);
+
+    let witnesses: usize = p_selectors + num_witnesses as usize;
+    // debug_mem(witnesses, SIZE_F);
+
+    for (let i: usize = 0; i < num_witnesses; i++) {
+        //debug_mem(witnesses + i * SIZE_F, SIZE_F);
+        bn128_frm_toMontgomery(witnesses + i * SIZE_F, witnesses + i * SIZE_F);
+    }
+
+    // debug_mem(0, SIZE_F * 2);
+
+    let leaf: usize = witnesses + ( num_witnesses as usize * SIZE_F );
+    // debug_mem(leaf, SIZE_F);
+    bn128_frm_toMontgomery(leaf, leaf);
 }
 
 export function get_proof_size(p_proof: usize): usize {
@@ -28,33 +59,50 @@ export function compute_proof(p_proof: usize): void {
 
 export function compute_root(p_proof: usize, p_out_root: usize): void {
     let root = ( p_proof as usize ); 
-    bn128_frm_toMontgomery(root, p_out_root);
+
+    bn128_frm_fromMontgomery(root, root);
+    //debug_mem(root, SIZE_F);
+    bn128_frm_toMontgomery(root, root);
 
     // TODO: index/num_witnesses are serialized as u64 and casted to usize which could cause overflow.
-    let index = load<u64>(p_proof + 32) as u64;
     let num_witnesses = load<u64>(p_proof + 40) as u64;
 
-    let witnesses: usize = root + 48;
+    let p_selectors: usize = root + 48;
+    let selector = load<u8>(p_selectors);
 
-    for (let i: usize = 0; i < num_witnesses; i++) {
-        bn128_frm_toMontgomery(witnesses + i * SIZE_F, witnesses + i * SIZE_F);
-    }
+    let witnesses: usize = p_selectors + num_witnesses as usize;
 
     let leaf: usize = witnesses + ( num_witnesses as usize * SIZE_F );
 
-    bn128_frm_toMontgomery(leaf, leaf);
+    if (selector == 0) {
+        mimc_compress2(leaf, witnesses, p_out_root);
+    } else {
+        mimc_compress2(witnesses, leaf, p_out_root);
+    }
 
-    mimc_compress2(leaf, witnesses, p_out_root);
+    bn128_frm_fromMontgomery(p_out_root, p_out_root);
+    //debug_mem(p_out_root, SIZE_F);
+    bn128_frm_toMontgomery(p_out_root, p_out_root);
+
+    p_selectors++;
+    selector = load<u8>(p_selectors);
 
     for (let i: usize = 1; i < num_witnesses; i++) {
-        if (index % 2 == 0) {
+        if (selector == 0) {
             mimc_compress2(p_out_root, witnesses + i * SIZE_F, p_out_root);
         } else {
             mimc_compress2(witnesses + i * SIZE_F, p_out_root, p_out_root);
         }
 
-        index /= 2;
+        bn128_frm_fromMontgomery(p_out_root, p_out_root);
+        //debug_mem(p_out_root, SIZE_F);
+        bn128_frm_toMontgomery(p_out_root, p_out_root);
+
+        // debug_mem(p_out_root, SIZE_F);
+
+        p_selectors++;
+        selector = load<u8>(p_selectors);
     }
 
-    bn128_frm_fromMontgomery(p_out_root, p_out_root);
+    //bn128_frm_fromMontgomery(p_out_root, p_out_root);
 }

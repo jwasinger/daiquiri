@@ -18,20 +18,21 @@ class Mixer:
         self.deposit_tree = MerkleTree(20, self.hasher) 
         self.withdrawal_tree = MerkleTree(20, self.hasher)
 
-        # self.note_tree = ...
-        # self.nullifier_tree = ...
-
     def get_mixer_root(self):
         return self.hasher.hash(self.deposit_tree.get_root(), self.withdrawal_tree.get_root())
 
     def deposit(self):
-        # self.commitments.append(commitment)
-
-        deposit = int(generate_deposit()['commitment'], 16)
+        # TODO leaf should be a hash, not an index
+        # import pdb; pdb.set_trace()
+        # deposit = int(generate_deposit()['commitment'], 16)
+        deposit = 14053575698504845674493400034513490149458859037183542549723210938865283594656
 
         # TODO assert !self.deposit_tree.contains(deposit)
 
-        self.deposit_tree.insert(deposit)
+        if not self.deposit_tree.insert(deposit):
+            raise Exception("duplicate deposit, regenerate and try again")
+            # TODO
+
         proof = self.deposit_tree.get_proof(deposit)
 
         if not proof.verify():
@@ -57,3 +58,5 @@ if __name__ == "__main__":
     print(mixer.deposit())
 
     # create stateless proofs for one deposit/withdraw pair, place them in separate test cases for benchmarking purposes
+
+    # TODO test for duplicate keys

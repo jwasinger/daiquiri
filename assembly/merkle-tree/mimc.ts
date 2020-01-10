@@ -2,6 +2,10 @@ import { bn128_frm_zero, bn128_fr_mul, bn128_frm_fromMontgomery, bn128_frm_toMon
 
 import { SIZE_F, memcpy } from "./util.ts";
 
+export const NULL_HASH: Array<u64> = [
+    0x7d3eb7ff691dba40, 0x1a34bf30e70eade2, 0x4a19a476fa41bb31, 0x2027777a0db98566,
+];
+
 // TODO this should be set to 220
 const num_rounds = 220;
 
@@ -337,6 +341,8 @@ export function mimc_init(): void {
     for (let i = 0; i < num_round_constants; i++) {
         bn128_frm_toMontgomery(round_constants.buffer as usize + i * SIZE_F, round_constants.buffer as usize + i * SIZE_F);
     }
+
+    bn128_frm_toMontgomery(NULL_HASH.buffer as usize, NULL_HASH.buffer as usize);
 }
 
 export function mimc_compress2(left: usize, right: usize, result: usize): void {
