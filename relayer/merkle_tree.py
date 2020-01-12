@@ -58,8 +58,6 @@ class MerkleProof:
         index = self.index
         computed_root = None
         
-        import pdb; pdb.set_trace()
-
         if self.selectors[0] == 0:
             computed_root = self.hasher.hash(self.leaf, self.witnesses[0])
         else:
@@ -73,8 +71,6 @@ class MerkleProof:
                 computed_root = self.hasher.hash(computed_root, witness)
             else:
                 computed_root = self.hasher.hash(witness, computed_root)
-
-            # import pdb; pdb.set_trace()
 
         if computed_root != self.root:
             return False
@@ -98,7 +94,7 @@ class MerkleTree:
         # list of merkle roots for empty trees size 0..depth
         self.empty_roots = [self.hasher.null()]
 
-        for i in range(1, self.depth + 1):
+        for i in range(1, self.depth):
             computed = self.hasher.hash(self.hasher.null(), self.empty_roots[i - 1])
             self.empty_roots.append(computed)
 
@@ -151,10 +147,10 @@ class MerkleTree:
 
         return tree_idx - self.row_starts[-1]
 
-
-    def hash_level(self, idxs, lvl):
+    #TODO clean hash_level and pair_siblings up, it's not super apparent what they do at a glance
+    def hash_level(self, idxs, height):
         idxs = [{'index': index, 'value': value} for index, value in idxs.items()]
-        siblings = list(self.pair_siblings(idxs))
+        siblings = list(self.pair_siblings(idxs, height))
         result = {}
 
         for left, right in siblings:
@@ -165,7 +161,7 @@ class MerkleTree:
         return result
 
 
-    def pair_siblings(self, nodes):
+    def pair_siblings(self, nodes, height):
         nodes = sorted(nodes, key = lambda x: x['index'])
         i = 0
         while i < len(nodes):
@@ -175,10 +171,10 @@ class MerkleTree:
                     yield(nodes[i], nodes[i + 1])
                     i += 2
                 else:
-                    yield (nodes[i], make_node(row_idx + 1, self.empty_roots[i]))
+                    yield (nodes[i], make_node(nodes[i]['index'] + 1, self.empty_roots[height]))
                     i += 1
             else:
-                yield (make_node(nodes[i]['index']- 1, self.hasher.null()), nodes[i] )
+                yield (make_node(nodes[i]['index'] - 1, self.empty_roots[height]), nodes[i] )
                 i += 1
 
     def merkleize(self):
@@ -192,10 +188,10 @@ class MerkleTree:
 
         for index in self.leaves:
             tree_idx = index + self.row_starts[-1]
-            tree_levels[self.depth][tree_idx] = self.leaves[index]
+            tree_levels[0][tree_idx] = self.leaves[index]
 
-        for lvl in reversed(range(0, self.depth)):
-            tree_levels[lvl] = self.hash_level(tree_levels[lvl + 1], lvl + 1)
+        for height in range(1, self.depth + 1):
+            tree_levels[height] = self.hash_level(tree_levels[height - 1], height - 1)
 
         for lvl in tree_levels:
             for idx, value in lvl.items():
@@ -216,25 +212,21 @@ class MerkleTree:
         index = self.get_tree_index(row_index)
         leaf = self.leaves[row_index]
 
-        
-        for lvl in reversed(range(self.depth)):
+        for lvl in range(self.depth):
             row_index = self.get_row_idx(index)
-            row_height = self.depth - lvl
-
-            import pdb; pdb.set_trace()
 
             if row_index % 2 == 0:
                 if index + 1 in self.tree:
                     witnesses.append(self.tree[index + 1])
                 else:
-                    witnesses.append(self.empty_roots[self.depth - lvl])
+                    witnesses.append(self.empty_roots[lvl])
 
                 selectors.append(0)
             else:
                 if index - 1 in self.tree:
                     witnesses.append(self.tree[index - 1])
                 else:
-                    witnesses.append(self.empty_roots[self.depth - lvl])
+                    witnesses.append(self.empty_roots[lvl])
 
                 selectors.append(1)
 
@@ -259,9 +251,9 @@ class TestMerkleTree(unittest.TestCase):
         self.assertTrue(proof_1.verify())
         self.assertTrue(proof_3.verify())
 
-    def test_empty(self):
-        hasher = MiMC()
-        tree = MerkleTree(20, hasher)
+    #def test_empty(self):
+        #hasher = MiMC()
+        #tree = MerkleTree(20, hasher)
 
         # TODO test that an empty tree has correct root
         # TODO test insertion of duplicate/colliding values in the tree
