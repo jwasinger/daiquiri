@@ -1,4 +1,4 @@
-import { mimc_compress2 } from "./mimc.ts";
+import { mimc_compress2, NULL_HASH } from "./mimc.ts";
 
 import { bn128_frm_zero, bn128_fr_mul, bn128_frm_fromMontgomery, bn128_frm_toMontgomery, bn128_frm_mul, bn128_frm_add, bn128_g1m_toMontgomery, bn128_g2m_toMontgomery, bn128_g1m_neg, bn128_ftm_one, bn128_pairingEq4, bn128_g1m_timesScalar, bn128_g1m_add, bn128_g1m_affine, bn128_g1m_neg} from "./websnark_bn128";
 
@@ -16,16 +16,15 @@ export function verify_merkle_proof(p_proof: usize): u32 {
 
     compute_root(p_proof, p_computed_root);
 
+    //debug_mem(p_computed_root, SIZE_F);
+
     return memcmp(p_computed_root, p_proof_root);
 }
 
 // convert all the field elements in the proof to montgomery form
 export function merkle_proof_init(p_proof: usize): void {
     let root = ( p_proof as usize ); 
-    // debug_mem(root, SIZE_F);
     bn128_frm_toMontgomery(root, root);
-
-    // debug_mem(0, SIZE_F * 2);
 
     let num_witnesses = load<u64>(p_proof + 40) as u64;
 
@@ -33,17 +32,12 @@ export function merkle_proof_init(p_proof: usize): void {
     let selector = load<u8>(p_selectors);
 
     let witnesses: usize = p_selectors + num_witnesses as usize;
-    // debug_mem(witnesses, SIZE_F);
 
     for (let i: usize = 0; i < num_witnesses; i++) {
-        //debug_mem(witnesses + i * SIZE_F, SIZE_F);
         bn128_frm_toMontgomery(witnesses + i * SIZE_F, witnesses + i * SIZE_F);
     }
 
-    // debug_mem(0, SIZE_F * 2);
-
     let leaf: usize = witnesses + ( num_witnesses as usize * SIZE_F );
-    // debug_mem(leaf, SIZE_F);
     bn128_frm_toMontgomery(leaf, leaf);
 }
 
@@ -60,12 +54,9 @@ export function compute_proof(p_proof: usize): void {
 export function compute_root(p_proof: usize, p_out_root: usize): void {
     let root = ( p_proof as usize ); 
 
-    bn128_frm_fromMontgomery(root, root);
-    //debug_mem(root, SIZE_F);
-    bn128_frm_toMontgomery(root, root);
-
     // TODO: index/num_witnesses are serialized as u64 and casted to usize which could cause overflow.
     let num_witnesses = load<u64>(p_proof + 40) as u64;
+    debug_mem(0, num_witnesses as usize);
 
     let p_selectors: usize = root + 48;
     let selector = load<u8>(p_selectors);
@@ -81,9 +72,21 @@ export function compute_root(p_proof: usize, p_out_root: usize): void {
     }
 
     bn128_frm_fromMontgomery(p_out_root, p_out_root);
-    //debug_mem(p_out_root, SIZE_F);
+    bn128_frm_fromMontgomery(leaf, leaf);
+    bn128_frm_fromMontgomery(NULL_HASH.buffer as usize, NULL_HASH.buffer as usize);
+    bn128_frm_fromMontgomery(witnesses, witnesses);
+
+    debug_mem(leaf, SIZE_F);
+    debug_mem(witnesses, SIZE_F);
+    debug_mem(p_out_root, SIZE_F);
+    debug_mem(NULL_HASH.buffer as usize, SIZE_F);
+
+    bn128_frm_toMontgomery(NULL_HASH.buffer as usize, NULL_HASH.buffer as usize);
+    bn128_frm_toMontgomery(witnesses, witnesses);
+    bn128_frm_toMontgomery(leaf, leaf);
     bn128_frm_toMontgomery(p_out_root, p_out_root);
 
+    debug_mem(p_selectors, 1);
     p_selectors++;
     selector = load<u8>(p_selectors);
 
@@ -95,11 +98,10 @@ export function compute_root(p_proof: usize, p_out_root: usize): void {
         }
 
         bn128_frm_fromMontgomery(p_out_root, p_out_root);
-        //debug_mem(p_out_root, SIZE_F);
+        debug_mem(p_out_root, SIZE_F);
         bn128_frm_toMontgomery(p_out_root, p_out_root);
 
-        // debug_mem(p_out_root, SIZE_F);
-
+        debug_mem(p_selectors, 1);
         p_selectors++;
         selector = load<u8>(p_selectors);
     }

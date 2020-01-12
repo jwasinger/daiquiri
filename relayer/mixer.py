@@ -23,9 +23,8 @@ class Mixer:
 
     def deposit(self):
         # TODO leaf should be a hash, not an index
-        # import pdb; pdb.set_trace()
         # deposit = int(generate_deposit()['commitment'], 16)
-        deposit = 14053575698504845674493400034513490149458859037183542549723210938865283594656
+        deposit = self.hasher.null() # 14053575698504845674493400034513490149458859037183542549723210938865283594656
 
         # TODO assert !self.deposit_tree.contains(deposit)
 

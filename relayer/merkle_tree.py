@@ -33,6 +33,8 @@ class MerkleProof:
         self.hasher = hasher
         self.selectors = selectors
 
+
+
     def serialize(self) -> str:
         root = num_to_hex(self.root)
         index = count_to_8_bytes(self.index)
@@ -56,6 +58,8 @@ class MerkleProof:
         index = self.index
         computed_root = None
         
+        import pdb; pdb.set_trace()
+
         if self.selectors[0] == 0:
             computed_root = self.hasher.hash(self.leaf, self.witnesses[0])
         else:
@@ -69,6 +73,8 @@ class MerkleProof:
                 computed_root = self.hasher.hash(computed_root, witness)
             else:
                 computed_root = self.hasher.hash(witness, computed_root)
+
+            # import pdb; pdb.set_trace()
 
         if computed_root != self.root:
             return False
@@ -88,6 +94,13 @@ class MerkleTree:
 
         for i in range(1, self.depth):
             self.row_starts.append(self.row_starts[i] + 2**i)
+
+        # list of merkle roots for empty trees size 0..depth
+        self.empty_roots = [self.hasher.null()]
+
+        for i in range(1, self.depth + 1):
+            computed = self.hasher.hash(self.hasher.null(), self.empty_roots[i - 1])
+            self.empty_roots.append(computed)
 
         # minor hack to set the initial NULL root
         self.leaves = {0 : self.hasher.null() }
@@ -162,7 +175,7 @@ class MerkleTree:
                     yield(nodes[i], nodes[i + 1])
                     i += 2
                 else:
-                    yield (nodes[i], make_node(row_idx + 1, self.hasher.null()))
+                    yield (nodes[i], make_node(row_idx + 1, self.empty_roots[i]))
                     i += 1
             else:
                 yield (make_node(nodes[i]['index']- 1, self.hasher.null()), nodes[i] )
@@ -203,21 +216,25 @@ class MerkleTree:
         index = self.get_tree_index(row_index)
         leaf = self.leaves[row_index]
 
+        
         for lvl in reversed(range(self.depth)):
             row_index = self.get_row_idx(index)
+            row_height = self.depth - lvl
+
+            import pdb; pdb.set_trace()
 
             if row_index % 2 == 0:
                 if index + 1 in self.tree:
                     witnesses.append(self.tree[index + 1])
                 else:
-                    witnesses.append(self.hasher.null())
+                    witnesses.append(self.empty_roots[self.depth - lvl])
 
                 selectors.append(0)
             else:
                 if index - 1 in self.tree:
                     witnesses.append(self.tree[index - 1])
                 else:
-                    witnesses.append(self.hasher.null())
+                    witnesses.append(self.empty_roots[self.depth - lvl])
 
                 selectors.append(1)
 
@@ -237,6 +254,7 @@ class TestMerkleTree(unittest.TestCase):
         proof_1 = tree.get_proof(1)
         proof_3 = tree.get_proof(3)
 
+        # import pdb; pdb.set_trace()
         self.assertTrue(proof_0.verify())
         self.assertTrue(proof_1.verify())
         self.assertTrue(proof_3.verify())
