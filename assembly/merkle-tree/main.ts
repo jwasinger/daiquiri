@@ -7,6 +7,9 @@ import { mimc_init, NULL_HASH } from "./mimc.ts";
 
 const p_NULL_HASH = NULL_HASH.buffer as usize;
 
+// root for an empty tree of depth 20
+export const NULL_ROOT: Array<u64> = [ 0xd6b781f439c20c0b, 0x5d00fc101129f08f, 0x137981fece56e977, 0x04af9e46dbc42b94 ];
+
 import { verify_merkle_proof, merkle_proof_init } from "./merkle_tree.ts";
 
 import { memcpy } from "./util.ts";
@@ -45,9 +48,15 @@ function deposit(input_data: usize, prestate_root: usize, out_root: usize): void
     // TODO replace memcpy's with pointer swapping if possible
     memcpy(tmp1, deposit_root);
     memcpy(tmp2, p_proof_leaf);
+
     memcpy(deposit_root, prestate_root);
     memcpy(p_proof_leaf, p_NULL_HASH);
 
+    bn128_frm_fromMontgomery(deposit_root, deposit_root);
+    debug_mem(deposit_root, SIZE_F);
+    bn128_frm_toMontgomery(deposit_root, deposit_root);
+
+    /*
     bn128_frm_fromMontgomery(deposit_root, deposit_root);
     bn128_frm_fromMontgomery(p_proof_leaf, p_proof_leaf);
 
@@ -57,6 +66,7 @@ function deposit(input_data: usize, prestate_root: usize, out_root: usize): void
 
     bn128_frm_toMontgomery(p_proof_leaf, p_proof_leaf);
     bn128_frm_toMontgomery(deposit_root, deposit_root);
+    */
 
     if (verify_merkle_proof(deposit_proof) != 0) {
         debug_mem(0, SIZE_F);
@@ -70,7 +80,6 @@ function deposit(input_data: usize, prestate_root: usize, out_root: usize): void
     memcpy(p_proof_leaf, tmp2);
 
     if (verify_merkle_proof(deposit_proof) != 0) {
-        debug_mem(1, SIZE_F);
         return;
     }
     */

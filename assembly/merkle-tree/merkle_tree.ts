@@ -18,6 +18,15 @@ export function verify_merkle_proof(p_proof: usize): u32 {
 
     //debug_mem(p_computed_root, SIZE_F);
 
+    bn128_frm_fromMontgomery(p_proof_root, p_proof_root);
+    bn128_frm_fromMontgomery(p_computed_root, p_computed_root);
+
+    debug_mem(p_proof_root, SIZE_F);
+    debug_mem(p_computed_root, SIZE_F);
+
+    bn128_frm_toMontgomery(p_computed_root, p_computed_root);
+    bn128_frm_toMontgomery(p_proof_root, p_proof_root);
+
     return memcmp(p_computed_root, p_proof_root);
 }
 
@@ -56,7 +65,7 @@ export function compute_root(p_proof: usize, p_out_root: usize): void {
 
     // TODO: index/num_witnesses are serialized as u64 and casted to usize which could cause overflow.
     let num_witnesses = load<u64>(p_proof + 40) as u64;
-    debug_mem(0, num_witnesses as usize);
+    //debug_mem(0, num_witnesses as usize);
 
     let p_selectors: usize = root + 48;
     let selector = load<u8>(p_selectors);
@@ -76,17 +85,17 @@ export function compute_root(p_proof: usize, p_out_root: usize): void {
     bn128_frm_fromMontgomery(NULL_HASH.buffer as usize, NULL_HASH.buffer as usize);
     bn128_frm_fromMontgomery(witnesses, witnesses);
 
-    debug_mem(leaf, SIZE_F);
-    debug_mem(witnesses, SIZE_F);
-    debug_mem(p_out_root, SIZE_F);
-    debug_mem(NULL_HASH.buffer as usize, SIZE_F);
+    //debug_mem(leaf, SIZE_F);
+    //debug_mem(witnesses, SIZE_F);
+    //debug_mem(p_out_root, SIZE_F);
+    //debug_mem(NULL_HASH.buffer as usize, SIZE_F);
 
     bn128_frm_toMontgomery(NULL_HASH.buffer as usize, NULL_HASH.buffer as usize);
     bn128_frm_toMontgomery(witnesses, witnesses);
     bn128_frm_toMontgomery(leaf, leaf);
     bn128_frm_toMontgomery(p_out_root, p_out_root);
 
-    debug_mem(p_selectors, 1);
+    //debug_mem(p_selectors, 1);
     p_selectors++;
     selector = load<u8>(p_selectors);
 
@@ -97,11 +106,13 @@ export function compute_root(p_proof: usize, p_out_root: usize): void {
             mimc_compress2(witnesses + i * SIZE_F, p_out_root, p_out_root);
         }
 
+        //bn128_frm_fromMontgomery(witnesses + i * SIZE_F, witnesses + i * SIZE_F);
         bn128_frm_fromMontgomery(p_out_root, p_out_root);
-        debug_mem(p_out_root, SIZE_F);
+        //debug_mem(p_out_root, SIZE_F);
+        //bn128_frm_toMontgomery(witnesses + i * SIZE_F, witnesses + i * SIZE_F);
         bn128_frm_toMontgomery(p_out_root, p_out_root);
 
-        debug_mem(p_selectors, 1);
+        // debug_mem(p_selectors, 1);
         p_selectors++;
         selector = load<u8>(p_selectors);
     }

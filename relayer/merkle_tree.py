@@ -45,7 +45,7 @@ class MerkleProof:
             serialized_selectors += byte_to_hex(selector)
 
         witnesses = ""
-        for witness in reversed(self.witnesses):
+        for witness in self.witnesses:
             witnesses += num_to_hex(witness)
 
         leaf = num_to_hex(self.leaf)
@@ -72,6 +72,7 @@ class MerkleProof:
             else:
                 computed_root = self.hasher.hash(witness, computed_root)
 
+        import pdb; pdb.set_trace()
         if computed_root != self.root:
             return False
 
