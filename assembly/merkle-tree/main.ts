@@ -12,7 +12,8 @@ export const NULL_ROOT: Array<u64> = [ 0xd6b781f439c20c0b, 0x5d00fc101129f08f, 0
 
 import { verify_merkle_proof, merkle_proof_init } from "./merkle_tree.ts";
 
-import { memcpy } from "./util.ts";
+import { mimc_compress2 } from "./mimc.ts";
+import { memcpy, memcmp } from "./util.ts";
 
 @external("env", "debug_printMemHex")
 export declare function debug_mem(pos: i32, len: i32): void;
@@ -47,7 +48,6 @@ function deposit(input_data: usize, prestate_root: usize, out_root: usize): void
 
     bn128_frm_toMontgomery(prestate_root, prestate_root);
 
-
     // TODO replace memcpy's with pointer swapping if possible
     memcpy(tmp1, deposit_root);
     memcpy(tmp2, p_proof_leaf);
@@ -55,41 +55,29 @@ function deposit(input_data: usize, prestate_root: usize, out_root: usize): void
     memcpy(deposit_root, prestate_root);
     memcpy(p_proof_leaf, p_NULL_HASH);
 
-    debug_mem(prestate_root, SIZE_F);
-    bn128_frm_fromMontgomery(deposit_root, deposit_root);
-    debug_mem(deposit_root, SIZE_F);
-    bn128_frm_toMontgomery(deposit_root, deposit_root);
-
-    /*
-    bn128_frm_fromMontgomery(deposit_root, deposit_root);
-    bn128_frm_fromMontgomery(p_proof_leaf, p_proof_leaf);
-
-    debug_mem(deposit_root, SIZE_F);
-    debug_mem(p_proof_leaf, SIZE_F);
-    debug_mem(0, 420);
-
-    bn128_frm_toMontgomery(p_proof_leaf, p_proof_leaf);
-    bn128_frm_toMontgomery(deposit_root, deposit_root);
-    */
-
     if (verify_merkle_proof(deposit_proof) != 0) {
-        debug_mem(0, SIZE_F);
+        debug_mem(1, SIZE_F);
         return
     }
 
     // re-insert the leaf and verify the merkle proof
 
-    memcpy(mixer_root, tmp1);
+    memcpy(deposit_root, tmp1);
     memcpy(p_proof_leaf, tmp2);
 
     if (verify_merkle_proof(deposit_proof) != 0) {
-        debug_mem(0, SIZE_F);
+        debug_mem(2, SIZE_F);
         return;
     }
 
-    memcpy(out_root, mixer_root);
+    mimc_compress2(deposit_root, withdraw_root, tmp1);
 
-    // return the new prestate
+    if (memcmp(tmp1, mixer_root) != 0) {
+        debug_mem(3, SIZE_F);
+        return
+    }
+
+    memcpy(out_root, mixer_root);
 }
 
 // TODO make all numbers in the proof expected to be passed in montgomery form

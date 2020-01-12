@@ -24,7 +24,7 @@ class Mixer:
     def deposit(self):
         # TODO leaf should be a hash, not an index
         # deposit = int(generate_deposit()['commitment'], 16)
-        deposit = self.hasher.null() # 14053575698504845674493400034513490149458859037183542549723210938865283594656
+        deposit = 14053575698504845674493400034513490149458859037183542549723210938865283594656
 
         # TODO assert !self.deposit_tree.contains(deposit)
 
@@ -34,6 +34,7 @@ class Mixer:
 
         proof = self.deposit_tree.get_proof(deposit)
 
+        import pdb; pdb.set_trace()
         if not proof.verify():
             raise Exception("invalid proof generated... this indicates a bug")
 

@@ -33,8 +33,6 @@ class MerkleProof:
         self.hasher = hasher
         self.selectors = selectors
 
-
-
     def serialize(self) -> str:
         root = num_to_hex(self.root)
         index = count_to_8_bytes(self.index)
@@ -99,13 +97,10 @@ class MerkleTree:
             computed = self.hasher.hash(self.hasher.null(), self.empty_roots[i - 1])
             self.empty_roots.append(computed)
 
-        # minor hack to set the initial NULL root
-        self.leaves = {0 : self.hasher.null() }
-        self.merkleize()
-        self.leaves = {}
+        self.root = self.empty_roots[-1]
 
     def get_root(self) -> int:
-        return self.tree[0]
+        return self.root
 
     def contains(self, value: int) -> bool:
         leaf_index = value % 2**self.depth
