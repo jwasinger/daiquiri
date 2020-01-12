@@ -45,6 +45,9 @@ function deposit(input_data: usize, prestate_root: usize, out_root: usize): void
 
     // take the proof and replace the leaf (deposit) with null, verify that the computed root was the prestate root
 
+    bn128_frm_toMontgomery(prestate_root, prestate_root);
+
+
     // TODO replace memcpy's with pointer swapping if possible
     memcpy(tmp1, deposit_root);
     memcpy(tmp2, p_proof_leaf);
@@ -52,6 +55,7 @@ function deposit(input_data: usize, prestate_root: usize, out_root: usize): void
     memcpy(deposit_root, prestate_root);
     memcpy(p_proof_leaf, p_NULL_HASH);
 
+    debug_mem(prestate_root, SIZE_F);
     bn128_frm_fromMontgomery(deposit_root, deposit_root);
     debug_mem(deposit_root, SIZE_F);
     bn128_frm_toMontgomery(deposit_root, deposit_root);
@@ -75,14 +79,15 @@ function deposit(input_data: usize, prestate_root: usize, out_root: usize): void
 
     // re-insert the leaf and verify the merkle proof
 
-    /*
     memcpy(mixer_root, tmp1);
     memcpy(p_proof_leaf, tmp2);
 
     if (verify_merkle_proof(deposit_proof) != 0) {
+        debug_mem(0, SIZE_F);
         return;
     }
-    */
+
+    memcpy(out_root, mixer_root);
 
     // return the new prestate
 }
