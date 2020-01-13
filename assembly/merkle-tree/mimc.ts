@@ -1,7 +1,10 @@
 import { bn128_frm_zero, bn128_fr_mul, bn128_frm_fromMontgomery, bn128_frm_toMontgomery, bn128_frm_mul, bn128_frm_add, bn128_g1m_toMontgomery, bn128_g2m_toMontgomery, bn128_g1m_neg, bn128_ftm_one, bn128_pairingEq4, bn128_g1m_timesScalar, bn128_g1m_add, bn128_g1m_affine, bn128_g1m_neg} from "./websnark_bn128";
 
-// bn128 point size
-const SIZE_F = 32;
+import { SIZE_F, memcpy } from "./util.ts";
+
+export const NULL_HASH: Array<u64> = [
+    0x7d3eb7ff691dba40, 0x1a34bf30e70eade2, 0x4a19a476fa41bb31, 0x2027777a0db98566,
+];
 
 // TODO this should be set to 220
 const num_rounds = 220;
@@ -227,13 +230,6 @@ const round_constants: Array<u64> = [
 0xd6b781f439c20c0b, 0x5d00fc101129f08f, 0x137981fece56e977, 0x04af9e46dbc42b94
 ];
 
-// memcpy fixed SIZE_F (32 bytes) amount
-function memcpy(dest: usize, src: usize): void {
-    for (let i = 0; i < 32; i++) {
-        store<u8>(dest + i, load<u8>(src + i));
-    }
-}
-
 function mimc_cipher(xL_in: usize, xR_in: usize, k_in: usize, xL_out: usize, xR_out: usize): void {
     let tmp = (new Uint8Array(SIZE_F)).buffer as usize;
     let xL = (new Uint8Array(SIZE_F)).buffer as usize;
@@ -345,6 +341,8 @@ export function mimc_init(): void {
     for (let i = 0; i < num_round_constants; i++) {
         bn128_frm_toMontgomery(round_constants.buffer as usize + i * SIZE_F, round_constants.buffer as usize + i * SIZE_F);
     }
+
+    bn128_frm_toMontgomery(NULL_HASH.buffer as usize, NULL_HASH.buffer as usize);
 }
 
 export function mimc_compress2(left: usize, right: usize, result: usize): void {
