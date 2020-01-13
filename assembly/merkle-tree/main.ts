@@ -73,22 +73,8 @@ function deposit(input_data: usize, prestate_root: usize, out_root: usize): void
     }
 
     bn128_frm_toMontgomery(mixer_root, mixer_root);
-    //debug_mem(mixer_root, SIZE_F);
-
-    bn128_frm_fromMontgomery(deposit_root, deposit_root);
-    bn128_frm_fromMontgomery(withdraw_root, withdraw_root);
-
-    debug_mem(deposit_root, SIZE_F);
-    debug_mem(withdraw_root, SIZE_F);
-
-    bn128_frm_toMontgomery(deposit_root, deposit_root);
-    bn128_frm_toMontgomery(withdraw_root, withdraw_root);
 
     mimc_compress2(deposit_root, withdraw_root, tmp1);
-
-    bn128_frm_fromMontgomery(tmp1, tmp1);
-    debug_mem(tmp1, SIZE_F);
-    bn128_frm_toMontgomery(tmp1, tmp1);
 
     if (memcmp(tmp1, mixer_root) != 0) {
         debug_mem(3, SIZE_F);
@@ -96,9 +82,6 @@ function deposit(input_data: usize, prestate_root: usize, out_root: usize): void
     }
 
     bn128_frm_fromMontgomery(mixer_root, out_root);
-    //memcpy(out_root, mixer_root);
-
-    // return the new prestate
 }
 
 // TODO make all numbers in the proof expected to be passed in montgomery form
