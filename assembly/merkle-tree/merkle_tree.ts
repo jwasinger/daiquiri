@@ -88,7 +88,6 @@ export function compute_root(p_proof: usize, p_out_root: usize): void {
     bn128_frm_toMontgomery(p_out_root, p_out_root);
     */
 
-    debug_mem(p_selectors, 1);
     p_selectors++;
     selector = load<u8>(p_selectors);
 
@@ -122,6 +121,7 @@ export function compute_root(p_proof: usize, p_out_root: usize): void {
         selector = load<u8>(p_selectors);
     }
 
+    /*
     bn128_frm_fromMontgomery(root, root);
     bn128_frm_fromMontgomery(p_out_root, p_out_root);
 
@@ -130,4 +130,5 @@ export function compute_root(p_proof: usize, p_out_root: usize): void {
 
     bn128_frm_toMontgomery(root, root);
     bn128_frm_toMontgomery(p_out_root, p_out_root);
+    */
 }
