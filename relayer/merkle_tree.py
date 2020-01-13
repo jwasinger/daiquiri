@@ -96,7 +96,7 @@ class MerkleTree:
         self.empty_roots = [self.hasher.null()]
 
         for i in range(1, self.depth):
-            computed = self.hasher.hash(self.hasher.null(), self.empty_roots[i - 1])
+            computed = self.hasher.hash(self.empty_roots[i - 1], self.empty_roots[i - 1])
             self.empty_roots.append(computed)
 
         # minor hack to set the initial NULL root
