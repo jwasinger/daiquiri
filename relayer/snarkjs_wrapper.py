@@ -8,7 +8,10 @@ default_fee = 1
 
 def generate_deposit(secret, nullifier):
     js_path = os.path.dirname(os.path.realpath(__file__)) + "/../cli.js"
-    return json.loads(subprocess.check_output(['node', '--experimental-worker', js_path, 'deposit', '--secret', str(secret), '--nullifier', str(nullifier)]).decode())
+    deposit_args = ['node', '--experimental-worker', js_path, 'deposit', '--secret', str(secret), '--nullifier', str(nullifier)]
+    print(" ".join(deposit_args))
+    import pdb; pdb.set_trace()
+    return json.loads(subprocess.check_output(deposit_args).decode())
 
 def get_withdrawal_args(deposit, deposit_proof):
     import pdb; pdb.set_trace()
@@ -17,7 +20,7 @@ def get_withdrawal_args(deposit, deposit_proof):
     result = [
         "--nullifier="+str(deposit['nullifier']), # TODO use nulliferHash instead of nullifier as public input
         "--secret="+str(deposit['secret']),
-        "--nullifier_hash="+deposit['commitment'],
+        "--commitment="+str(int(deposit['commitment'], 16)),
         "--recipient="+str(int(default_recipient.lower(), 16)),
         "--relayer="+str(int(default_relayer.lower(), 16)),
         "--fee="+str(default_fee),

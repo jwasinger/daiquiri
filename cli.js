@@ -28,9 +28,7 @@ require('yargs')
         console.log(argv.secret)
         */
 
-        deposit = createDeposit(argv.nullifier, argv.secret)
-        deposit['secret'] = argv.secret
-        deposit['nullifier'] = argv.nullifier
+        deposit = createDeposit(bigInt(argv.nullifier), bigInt(argv.secret))
 
         console.log(JSON.stringify(deposit));
     })
@@ -52,9 +50,10 @@ require('yargs')
         let witnesses = argv.witnesses.split(',').map(x => x.toString());
         let relayer = argv.relayer;
         let fee = argv.fee;
+        let commitment = argv.commitment;
 
         // console.log(createWithdrawal(deposit, recipient, root, witnesseB, selectors));
-        withdraw(deposit, recipient, root, witnesses, selectors, relayer, fee);
+        withdraw(deposit, recipient, root, witnesses, selectors, relayer, fee, commitment);
     }).argv
 
 /*
@@ -68,18 +67,20 @@ if (argv.deposit) {
 
 }*/
 
-function createDeposit() {
-    let nullifier = rbigint(31);
-    let secret = rbigint(31);
+function createDeposit(nullifier, secret) {
+    // TODO restrict nullifier/secret to fit within the field?
 
 	let preimage = Buffer.concat([nullifier.leInt2Buff(31), secret.leInt2Buff(31)]).toString('hex')
 	let commitment = pedersenHash(preimage).toString(16)
 	let nullifierHash = pedersenHash(nullifier.leInt2Buff(31)).toString(16)
-	return {preimage, commitment, nullifierHash } 
+
+    secret = parseInt(secret)
+    nullifier = parseInt(nullifier)
+	return {preimage, commitment, nullifierHash, secret, nullifier } 
 }
 
 // return json for the snark proof
-async function withdraw(deposit, recipient, root, merkle_witnesses, selectors, relayer, fee) {
+async function withdraw(deposit, recipient, root, merkle_witnesses, selectors, relayer, fee, commitment) {
 	// generate snark proof of withdrawal
   let circuit = new snarkjs.Circuit(require("./build/circuit/withdraw.json"));
   let proving_key = require("./build/circuit/withdraw_proving_key.json");
@@ -102,9 +103,12 @@ async function withdraw(deposit, recipient, root, merkle_witnesses, selectors, r
     secret: deposit.secret,
     pathElements: merkle_witnesses,
     pathIndices: selectors,
+    commitment
   }
 
-  let witnesses = circuit.calculateWitness(input)
+  let witnesses = circuit.calculateWitness(input, {
+      logOutput: true,
+  })
 
   /*
   console.log('Generating SNARK proof')

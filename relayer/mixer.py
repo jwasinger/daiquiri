@@ -25,8 +25,8 @@ class Mixer:
         # TODO leaf should be a hash, not an index
         # deposit = int(generate_deposit()['commitment'], 16)
         #deposit = self.hasher.null()
-        nullifier = 1
-        secret = 2
+        nullifier = 2
+        secret = 3
         deposit = generate_deposit(secret, nullifier)# 14053575698504845674493400034513490149458859037183542549723210938865283594656
 
         commitment = int(deposit['commitment'], 16)

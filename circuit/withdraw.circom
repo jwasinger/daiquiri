@@ -33,7 +33,9 @@ template Withdraw(levels) {
     signal input relayer;  // not taking part in any computations
     signal input fee;      // not taking part in any computations
     // signal input refund;   // not taking part in any computations
-    signal public input nullifier;
+    signal input nullifier;
+    signal input commitment; // TODO replace
+
     signal private input secret;
     signal private input pathElements[levels];
     signal private input pathIndices[levels];
@@ -41,9 +43,13 @@ template Withdraw(levels) {
     component hasher = CommitmentHasher();
     hasher.nullifier <== nullifier;
     hasher.secret <== secret;
-    // hasher.nullifierHash === nullifierHash;
+
 
     component tree = MerkleTreeChecker(levels);
+    hasher.commitment === commitment;
+
+    // hasher.nullifierHash === nullifierHash;
+
     tree.leaf <== hasher.commitment;
     tree.root <== root;
     for (var i = 0; i < levels; i++) {
