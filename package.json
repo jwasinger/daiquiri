@@ -6,10 +6,10 @@
   "scripts": {
     "test:relayer": "cd relayer && python3 test.py",
     "test": "node index.js tests/tests.yml",
-    "gen_proof": "rm -rf build/proof && mkdir build/proof && npx snarkjs calculatewitness -c build/circuit/merkle_tree.json -i tests/circuit_input.json -w build/proof/witness.json --lo && snarkjs proof -w build/proof/witness.json --public build/proof/public.json --pk build/circuit/merkle_tree_proving_key.json -p build/proof/proof.json",
-    "build:circuit:compile": "npx circom circuit/merkle_tree.circom -o build/circuit/merkle_tree.json && npx snarkjs info -c build/circuit/merkle_tree.json",
-    "build:circuit:setup": "npx snarkjs setup --protocol groth -c build/circuit/merkle_tree.json --pk build/circuit/merkle_tree_proving_key.json --vk build/circuit/merkle_tree_verification_key.json",
-    "build:circuit:bin": "node node_modules/websnark/tools/buildpkey.js -i build/circuit/merkle_tree_proving_key.json -o build/circuit/merkle_tree_proving_key.bin",
+    "gen_proof": "rm -rf build/proof && mkdir build/proof && npx snarkjs calculatewitness -c build/circuit/withdraw.json -i tests/circuit_input.json -w build/proof/witness.json --lo && snarkjs proof -w build/proof/witness.json --public build/proof/public.json --pk build/circuit/withdraw_proving_key.json -p build/proof/proof.json",
+    "build:circuit:compile": "npx circom circuit/withdraw.circom -o build/circuit/withdraw.json && npx snarkjs info -c build/circuit/withdraw.json",
+    "build:circuit:setup": "npx snarkjs setup --protocol groth -c build/circuit/withdraw.json --pk build/circuit/withdraw_proving_key.json --vk build/circuit/withdraw_verification_key.json",
+    "build:circuit:bin": "node node_modules/websnark/tools/buildpkey.js -i build/circuit/withdraw_proving_key.json -o build/circuit/withdraw_proving_key.bin",
     "build:circuit": "mkdir -p build/circuit && npm run build:circuit:compile && npm run build:circuit:setup && npm run build:circuit:bin && npm run gen_proof",
     "build:verifier": "npx asc assembly/merkle-tree/main.ts -b assembly/merkle-tree/out/main.wasm -t assembly/merkle-tree/out/main.wat --validate && cd assembly/merkle-tree && gulp",
     "build": "npm run clean && npm run build:circuit && npm run build:verifier",
@@ -27,13 +27,14 @@
   },
   "homepage": "https://github.com/jwasinger/daiquiri#readme",
   "dependencies": {
+    "assemblyscript": "0.8.1",
+    "circom": "0.0.34",
+    "circomlib": "0.0.20",
     "gulp": "^4",
     "js-yaml": "^3.13.1",
     "snarkjs": "^0.1.20",
     "wabt": "1.0.11",
-    "websnark": "0.0.5",
-    "circom": "0.0.34",
-    "circomlib": "0.0.20",
-    "assemblyscript": "0.8.1"
+    "wasmbuilder": "0.0.8",
+    "websnark": "https://github.com/iden3/websnark#3dd30d54991610d1194cd78e140c4cd89edd3132"
   }
 }

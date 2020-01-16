@@ -49,5 +49,3 @@ template MerkleTreeChecker(levels) {
 
     root === hashers[levels - 1].hash;
 }
-
-component main = MerkleTreeChecker(20);

@@ -3,6 +3,10 @@ const snarkjs = require('snarkjs')
 const crypto = require('crypto')
 const argv = require('yargs').argv
 
+const buildBn128 = require("websnark/src/bn128");
+const websnarkUtils = require("websnark/src/utils");
+const bigInt = snarkjs.bigInt;
+
 /** Compute pedersen hash */
 const pedersenHash = data => circomlib.babyJub.unpackPoint(circomlib.pedersenHash.hash(data))[0]
 const rbigint = nbytes => snarkjs.bigInt.leBuff2int(crypto.randomBytes(nbytes))
@@ -24,9 +28,14 @@ require('yargs')
         console.log(argv.secret)
         */
 
-        console.log(JSON.stringify(createDeposit(argv.nullifier, argv.secret)));
+        deposit = createDeposit(argv.nullifier, argv.secret)
+        deposit['secret'] = argv.secret
+        deposit['nullifier'] = argv.nullifier
+
+        console.log(JSON.stringify(deposit));
     })
-    .command('withdraw', 'generate withdraw [nullifier] [secret] [nullifier_hash] [recipient] [root] [witnesses] [selectors]', (yargs) => {
+    .command('withdraw', 'generate withdraw [nullifier] [secret] [nullifier_hash] [recipient] [relayer] [root] [witnesses] [selectors]', (yargs) => {
+        /*
         yargs.positional('nullifier')
             .positional('secret')
             .positional('nullifier_hash')
@@ -34,16 +43,18 @@ require('yargs')
             .positional('root')
             .positional('witnesses')
             .positional('selectors')
+            */
     }, (argv) => {
         let deposit = { secret: argv.secret, nullifier: argv.nullifier, nullifier_hash: argv.nullifier_hash };
         let recipient = argv.recipient;
         let root = argv.root;
-        let witnesses = argv.witnesses.split(',');
-        let selectors = argv.selectors.split(',');
-        console.log(createWithdrawal(deposit, recipient, root, witnesses, selectors));
-        withdraw(deposit, recipient, root, witnesses, selectors).then((v) => {
-            console.log(v)
-        })
+        let selectors = argv.selectors.split(',').map(x => x.toString());
+        let witnesses = argv.witnesses.split(',').map(x => x.toString());
+        let relayer = argv.relayer;
+        let fee = argv.fee;
+
+        // console.log(createWithdrawal(deposit, recipient, root, witnesseB, selectors));
+        withdraw(deposit, recipient, root, witnesses, selectors, relayer, fee);
     }).argv
 
 /*
@@ -68,30 +79,43 @@ function createDeposit() {
 }
 
 // return json for the snark proof
-async function withdraw(deposit, recipient, root, witnesses, selectors) {
+async function withdraw(deposit, recipient, root, merkle_witnesses, selectors, relayer, fee) {
 	// generate snark proof of withdrawal
+  let circuit = new snarkjs.Circuit(require("./build/circuit/withdraw.json"));
+  let proving_key = require("./build/circuit/withdraw_proving_key.json");
+
+  // let groth16 = await buildGroth16();
+  let bn128 = await buildBn128();
+
+  //TODO make nullifierHash a public input to the circuit instead of nullifier
   const input = {
     // Public snark inputs
     root: root,
-    nullifierHash: deposit.nullifierHash,
+    //nullifierHash: deposit.nullifierHash,
     recipient: bigInt(recipient),
     relayer: bigInt(relayer),
     fee: bigInt(fee),
-    refund: bigInt(refund),
+    nullifier: deposit.nullifier,
+    // refund: bigInt(refund), what is this used for?
 
     // Private snark inputs
-    nullifier: deposit.nullifier,
     secret: deposit.secret,
-    pathElements: path_elements,
-    pathIndices: path_index,
+    pathElements: merkle_witnesses,
+    pathIndices: selectors,
   }
 
+  let witnesses = circuit.calculateWitness(input)
+
+  /*
   console.log('Generating SNARK proof')
   console.time('Proof time')
-  const proofData = await websnarkUtils.genWitnessAndProve(groth16, input, circuit, proving_key)
-  debugger
+  const proofData = await bn128.groth16GenProof(, input, circuit, proving_key)
   console.timeEnd('Proof time')
+  */
 
+  const proof = await snarkjs.genProof(proving_key, witnesses);
+
+  /*
   const args = [
     toHex(input.root),
     toHex(input.nullifierHash),
@@ -100,6 +124,7 @@ async function withdraw(deposit, recipient, root, witnesses, selectors) {
     toHex(input.fee),
     toHex(input.refund)
   ]
+  */
 
   return { proof, args }
 }
