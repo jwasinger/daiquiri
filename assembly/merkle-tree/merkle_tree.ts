@@ -26,9 +26,9 @@ export function merkle_proof_init(p_proof: usize): void {
     let root = ( p_proof as usize ); 
     bn128_frm_toMontgomery(root, root);
 
-    let num_witnesses = load<u64>(p_proof + 40) as u64;
+    let num_witnesses = load<u64>(p_proof + SIZE_F) as u64;
 
-    let p_selectors: usize = root + 48;
+    let p_selectors: usize = root + 40;
     let selector = load<u8>(p_selectors);
 
     let witnesses: usize = p_selectors + num_witnesses as usize;
@@ -37,8 +37,14 @@ export function merkle_proof_init(p_proof: usize): void {
         bn128_frm_toMontgomery(witnesses + i * SIZE_F, witnesses + i * SIZE_F);
     }
 
+    let tmp1: usize = (new Uint8Array(SIZE_F)).buffer as usize;
+    let tmp2: usize = (new Uint8Array(SIZE_F)).buffer as usize;
+
     let leaf: usize = witnesses + ( num_witnesses as usize * SIZE_F );
-    bn128_frm_toMontgomery(leaf, leaf);
+    debug_mem(leaf, SIZE_F);
+    bn128_frm_toMontgomery(leaf, tmp1);
+    bn128_frm_fromMontgomery(tmp1, tmp2);
+    debug_mem(tmp2, SIZE_F);
 }
 
 export function get_proof_size(p_proof: usize): usize {
@@ -55,10 +61,10 @@ export function compute_root(p_proof: usize, p_out_root: usize): void {
     let root = ( p_proof as usize ); 
 
     // TODO: index/num_witnesses are serialized as u64 and casted to usize which could cause overflow.
-    let num_witnesses = load<u64>(p_proof + 40) as u64;
+    let num_witnesses = load<u64>(p_proof + 32) as u64;
     //debug_mem(0, num_witnesses as usize);
 
-    let p_selectors: usize = root + 48;
+    let p_selectors: usize = root + 40;
     let selector = load<u8>(p_selectors);
 
     let witnesses: usize = p_selectors + num_witnesses as usize;
@@ -80,12 +86,13 @@ export function compute_root(p_proof: usize, p_out_root: usize): void {
     debug_mem(leaf, SIZE_F);
     debug_mem(witnesses, SIZE_F);
     debug_mem(p_out_root, SIZE_F);
-    //debug_mem(NULL_HASH.buffer as usize, SIZE_F);
 
     bn128_frm_toMontgomery(NULL_HASH.buffer as usize, NULL_HASH.buffer as usize);
     bn128_frm_toMontgomery(witnesses, witnesses);
     bn128_frm_toMontgomery(leaf, leaf);
     bn128_frm_toMontgomery(p_out_root, p_out_root);
+
+    debug_mem(420, num_witnesses as usize);
     */
 
     p_selectors++;

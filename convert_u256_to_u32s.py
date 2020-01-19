@@ -223,9 +223,7 @@ constants = [
 
 hex_constants = ['{:02x}'.format(c).rjust(64, '0') for c in constants]
 
-null_hash = 14543742788565021628577424853847564376151732847602780516906950225481254681152
-
-null_root = 8796936547702804778715386945981236724917174803884666331661952183192884222284
+null_hash = 21663839004416932945382355908790599225266501822907911457504978515578255421292
 
 def print_as_u64s(num):
   u64s = [const[0:16],
@@ -242,8 +240,6 @@ for const in hex_constants:
 
 print()
 print_as_u64s(null_hash)
-print()
-print_as_u64s(null_root)
 
 
   # print out low -> high memory order for u32s

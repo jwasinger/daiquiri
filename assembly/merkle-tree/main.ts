@@ -43,7 +43,7 @@ function deposit(input_data: usize, prestate_root: usize, out_root: usize): void
     let tmp2: usize = (new Uint8Array(SIZE_F)).buffer as usize;
     
     // TODO no hardcode
-    let p_proof_leaf = deposit_proof + 48 + 20 + 20 * SIZE_F;
+    let p_proof_leaf = deposit_proof + 40 + 20 + 20 * SIZE_F;
 
     // take the proof and replace the leaf (deposit) with null, verify that the computed root was the prestate root
 
@@ -51,21 +51,25 @@ function deposit(input_data: usize, prestate_root: usize, out_root: usize): void
     bn128_frm_toMontgomery(withdraw_root, withdraw_root);
 
     // TODO replace memcpy's with pointer swapping if possible
+    /*
     memcpy(tmp1, deposit_root);
     memcpy(tmp2, p_proof_leaf);
 
     memcpy(deposit_root, prestate_root);
     memcpy(p_proof_leaf, p_NULL_HASH);
+    */
 
+    /*
     if (verify_merkle_proof(deposit_proof) != 0) {
         debug_mem(1, SIZE_F);
         return
     }
+    */
 
     // re-insert the leaf and verify the merkle proof
 
-    memcpy(deposit_root, tmp1);
-    memcpy(p_proof_leaf, tmp2);
+    //memcpy(deposit_root, tmp1);
+    //memcpy(p_proof_leaf, tmp2);
 
     if (verify_merkle_proof(deposit_proof) != 0) {
         debug_mem(2, SIZE_F);
