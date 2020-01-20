@@ -41,10 +41,7 @@ export function merkle_proof_init(p_proof: usize): void {
     let tmp2: usize = (new Uint8Array(SIZE_F)).buffer as usize;
 
     let leaf: usize = witnesses + ( num_witnesses as usize * SIZE_F );
-    debug_mem(leaf, SIZE_F);
-    bn128_frm_toMontgomery(leaf, tmp1);
-    bn128_frm_fromMontgomery(tmp1, tmp2);
-    debug_mem(tmp2, SIZE_F);
+    bn128_frm_toMontgomery(leaf, leaf);
 }
 
 export function get_proof_size(p_proof: usize): usize {
@@ -62,7 +59,6 @@ export function compute_root(p_proof: usize, p_out_root: usize): void {
 
     // TODO: index/num_witnesses are serialized as u64 and casted to usize which could cause overflow.
     let num_witnesses = load<u64>(p_proof + 32) as u64;
-    //debug_mem(0, num_witnesses as usize);
 
     let p_selectors: usize = root + 40;
     let selector = load<u8>(p_selectors);
