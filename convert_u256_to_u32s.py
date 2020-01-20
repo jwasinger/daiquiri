@@ -226,10 +226,10 @@ hex_constants = ['{:02x}'.format(c).rjust(64, '0') for c in constants]
 null_hash = 21663839004416932945382355908790599225266501822907911457504978515578255421292
 
 def print_as_u64s(num):
-  u64s = [const[0:16],
-           const[16:32],
-           const[32:48],
-           const[48:64]]
+  u64s = [num[0:16],
+           num[16:32],
+           num[32:48],
+           num[48:64]]
 
   be_u64s = map(lambda x: ''.join(list(reversed(textwrap.wrap(x,2)))), u64s)
   be_u64s = list(reversed(u64s))
@@ -239,8 +239,9 @@ for const in hex_constants:
   print_as_u64s(const)
 
 print()
+null_hash = '{:02x}'.format(null_hash).rjust(64, '0')
 print_as_u64s(null_hash)
 
 
   # print out low -> high memory order for u32s
-  # lo is num 
+  # lo is tum 

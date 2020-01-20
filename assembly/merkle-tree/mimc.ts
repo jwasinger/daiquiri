@@ -3,7 +3,7 @@ import { bn128_frm_zero, bn128_fr_mul, bn128_frm_fromMontgomery, bn128_frm_toMon
 import { SIZE_F, memcpy } from "./util.ts";
 
 export const NULL_HASH: Array<u64> = [
-    0xd6b781f439c20c0b, 0x5d00fc101129f08f, 0x137981fece56e977, 0x04af9e46dbc42b94,
+    0x249685ed4899af6c, 0x821b340f76e741e2, 0x343a35b6eba15db4, 0x2fe54c60d3acabf3,
 ];
 
 // TODO this should be set to 220

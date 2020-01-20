@@ -54,6 +54,7 @@ function deposit(input_data: usize, prestate_root: usize, out_root: usize): void
     memcpy(tmp1, deposit_root);
     memcpy(tmp2, p_proof_leaf);
 
+    // TODO: need to place the prestate root in mixer root and recalculate the mixer root
     memcpy(deposit_root, prestate_root);
     memcpy(p_proof_leaf, p_NULL_HASH);
 

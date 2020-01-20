@@ -82,13 +82,12 @@ export function compute_root(p_proof: usize, p_out_root: usize): void {
     debug_mem(leaf, SIZE_F);
     debug_mem(witnesses, SIZE_F);
     debug_mem(p_out_root, SIZE_F);
+    debug_mem(420, SIZE_F);
 
     bn128_frm_toMontgomery(NULL_HASH.buffer as usize, NULL_HASH.buffer as usize);
     bn128_frm_toMontgomery(witnesses, witnesses);
     bn128_frm_toMontgomery(leaf, leaf);
     bn128_frm_toMontgomery(p_out_root, p_out_root);
-
-    debug_mem(420, num_witnesses as usize);
     */
 
     p_selectors++;
@@ -114,6 +113,7 @@ export function compute_root(p_proof: usize, p_out_root: usize): void {
         debug_mem(witnesses + i * SIZE_F, SIZE_F);
         debug_mem(p_out_root, SIZE_F);
         debug_mem(p_selectors, 1);
+        debug_mem(420, SIZE_F);
 
         bn128_frm_toMontgomery(witnesses + i * SIZE_F, witnesses + i * SIZE_F);
         bn128_frm_toMontgomery(p_out_root, p_out_root);
