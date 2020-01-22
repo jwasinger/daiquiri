@@ -2,6 +2,8 @@
 
 import { bn128_frm_fromMontgomery, bn128_frm_toMontgomery } from "./websnark_bn128";
 
+import { groth16_verify } from "./groth16_verify";
+
 const SIZE_F = 32;
 import { mimc_init, NULL_HASH } from "./mimc.ts";
 
@@ -85,6 +87,29 @@ function deposit(input_data: usize, prestate_root: usize, out_root: usize): void
     bn128_frm_fromMontgomery(mixer_root, out_root);
 }
 
+function withdraw(input_data: usize, prestate_root: usize, out_root: usize): i32 {
+    /*
+    Withdrawal proof is composed of:
+    * Merkle proof that new nullifierHash is in the nullifier tree
+    * A Groth16 proof that Pedersen(nullifier + Secret) is in the commitment tree
+    */
+
+    // verify the nullifier merkle proof against the mixer prestate
+
+    let groth_proof_start: usize = 0;
+
+    // verify the post-state root is an input to the ZKP
+
+    // verify the ZKP
+
+    if(groth16_verify(input_data) != 0) {
+        debug_mem(0, SIZE_F);
+    }
+
+    // update the post state
+    return 0;
+}
+
 // TODO make all numbers in the proof expected to be passed in montgomery form
 export function main(): i32 {
     let input_data_len = input_size();
@@ -98,7 +123,9 @@ export function main(): i32 {
 
     mimc_init();
 
-    deposit(input_data_buff as usize, prestate.buffer as usize, result.buffer as usize);
+    withdraw(input_data_buff as usize, prestate.buffer as usize, result.buffer as usize);
+    
+    //deposit(input_data_buff as usize, prestate.buffer as usize, result.buffer as usize);
 
     save_output(result.buffer as usize);
 
