@@ -79,8 +79,7 @@ function append_leaf(input_data: usize, p_prestate_root: usize, out_root: usize,
     }
 
     if (memcmp(tmp3, p_prestate_root) != 0) {
-        debug_mem(3, SIZE_F);
-        return 0;
+        throw new Error("leaf not validated to be previously empty");
     }
 
     // calculate the new mixer root based on the addition of a commitment/nullifier
@@ -97,8 +96,7 @@ function append_leaf(input_data: usize, p_prestate_root: usize, out_root: usize,
     }
 
     if (memcmp(tmp3, p_mixer_root) != 0) {
-        debug_mem(4, SIZE_F);
-        return 0;
+        throw new Error("merkle proof for leaf addition not correct");
     }
 
     bn128_frm_fromMontgomery(p_mixer_root, out_root);
@@ -126,7 +124,7 @@ function withdraw(input_data: usize, prestate_root: usize, out_root: usize): voi
     bn128_frm_toMontgomery(p_withdraw_root, p_withdraw_root);
 
     if(groth16_verify(groth_proof_start) != 0) {
-        debug_mem(0, SIZE_F);
+        throw new Error("ZKP not validated");
     }
 }
 
@@ -150,13 +148,8 @@ export function main(): i32 {
     } else if(selector == SELECTOR_WITHDRAW) {
         withdraw(input_data_start, prestate.buffer as usize, result.buffer as usize);
     } else {
-        // invalid selector
-        // throw exception
+        throw new Error("invalid selector (not deposit or withdraw)");
     }
-
-    // withdraw(input_data_buff as usize, prestate.buffer as usize, result.buffer as usize);
-    
-    //deposit(input_data_buff as usize, prestate.buffer as usize, result.buffer as usize);
 
     save_output(result.buffer as usize);
 
