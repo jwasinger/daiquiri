@@ -1,4 +1,4 @@
-merkle_tree_source: assembly/merkle-tree/out/main_with_websnark.wasm
+merkle_tree_source: assembly/mixer/out/main_with_websnark.wasm
 tests:
   basic: {
   prestate:  67295b06768a5411bd3aa39f62397f1d1b45a5a303370c8ce73c41f0f259be19,

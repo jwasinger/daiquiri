@@ -6,7 +6,7 @@ Daiquiri is an Eth2 Execution Environment for a coin-mixer.  The design is adapt
 
 Test deposit and withdrawal:
 
-`npm run build:verifier && npm run test`
+`npm run build && npm run test`
 
 ## How does a mixer like Tornado Cash work?
 

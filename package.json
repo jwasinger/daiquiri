@@ -4,18 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test:relayer": "cd relayer && python3 test.py",
     "test": "npm run test:deposit && npm run test:withdraw",
     "test:deposit": "node index.js tests/tests-deposit.yml",
     "test:withdraw": "node index.js tests/tests-withdraw.yml",
-    "gen_proof": "rm -rf build/proof && mkdir build/proof && npx snarkjs calculatewitness -c build/circuit/merkle_tree.json -i tests/circuit_input.json -w build/proof/witness.json --lo && snarkjs proof -w build/proof/witness.json --public build/proof/public.json --pk build/circuit/merkle_tree_proving_key.json -p build/proof/proof.json",
-    "build:circuit:compile": "npx circom circuit/merkle_tree.circom -o build/circuit/merkle_tree.json && npx snarkjs info -c build/circuit/merkle_tree.json",
-    "build:circuit:setup": "npx snarkjs setup --protocol groth -c build/circuit/merkle_tree.json --pk build/circuit/merkle_tree_proving_key.json --vk build/circuit/merkle_tree_verification_key.json",
-    "build:circuit:bin": "node node_modules/websnark/tools/buildpkey.js -i build/circuit/merkle_tree_proving_key.json -o build/circuit/merkle_tree_proving_key.bin",
-    "build:circuit": "mkdir -p build/circuit && npm run build:circuit:compile && npm run build:circuit:setup && npm run build:circuit:bin && npm run gen_proof",
-    "build:verifier": "npx asc assembly/merkle-tree/main.ts -b assembly/merkle-tree/out/main.wasm -t assembly/merkle-tree/out/main.wat --validate && cd assembly/merkle-tree && gulp",
-    "build": "npm run clean && npm run build:circuit && npm run build:verifier",
-    "clean": "rm -rf build"
+    "build": "npx asc assembly/mixer/main.ts -b assembly/mixer/out/main.wasm -t assembly/mixer/out/main.wat --validate && cd assembly/mixer && gulp"
   },
   "repository": {
     "type": "git",
