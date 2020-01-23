@@ -46,7 +46,7 @@ if __name__ == "__main__":
     index = count_to_8_bytes(index)
 
     test['tests']['basic']['input'] = root+index+num_witnesses+witnesses+leaf
-    test['tests']['basic']['expected'] = root
+    test['tests']['basic']['expected'] = '0'*64
 
     with open('tests.yml', 'w') as f:
       yaml.dump(test, f)

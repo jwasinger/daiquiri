@@ -1,18 +1,36 @@
-# MiMC Merkle Tree
+# Daiquiri
 
-Implementation of merkle proof verification in a Webassembly environment.  MiMC (citation) is chosen as the hash function and the tree format is binary.  The implementation is compatible with MiMC-Sponge implementation in the Circom library (citation).
+Daiquiri is an Eth2 Execution Environment for a coin-mixer.  The design is adapted from Tornado Cash.
 
 ## Usage
 
-Generate and verify a snark proof of a MiMC merkle proof for a depth 20 tree, Build the wasm verifier code and verify the merkle proof (not ZK proof) to ensure implementation compatibility with snarkjs:
-```
-> npm run build && npm run test
-```
+Test deposit and withdrawal:
 
-Trusted setup and proof generation is slow with SnarkJS.  To skip it (and used a pre-generated proof), just run `npm run build:verifier && npm run test`.
+`npm run build:verifier && npm run test`
 
-## Why?
+## How does a mixer like Tornado Cash work?
 
-MiMC is amenable to use inside SNARK circuits.  Verification of a merkle proof for a tree of depth 20 results in a circuit with (x) constraints.  For reference, verifying a single call to Keccak256 is (y) constraints.
+State is expressed as two merkle tree represented as `withdrawal_root` and `deposit_root`.
 
-## Benchmarks (TODO)
+To deposit, a user generates two values `secret`, `nullifier` and commits `hash(secret + nullifier)`.  They place the commitment in the deposit tree.
+
+To withdraw, a user creates a ZKSNARK proof that `hash(secret + nullifier)` is in the tree represented by `deposit_root`.  Only `nullifier` is a public input to the circuit.  `nullifier` is added to the withdrawal tree.
+
+Because `hash` cannot be inverted, `nullifier` cannot be derived from `hash(secret + nullifier)` or vice versa.  Thus, the deposit of a commitment cannot be linked to its corresponding withdrawal.
+
+**Note** 
+* The use of a relayer is preferred for withdrawals for UX reasons (expand on this)
+* The nullifier acts to prevent users being able to cash out of the mixer more than once per commitment.
+* The requirement of computing `hash` within a SNARK circuit means that we use a SNARK-friendly hash function (in this case MiMC-...)
+
+## How does this change with Eth2?
+
+Instead of storage, Eth2 represents the entire state with one 32 bit state root.
+
+Luckily, mixers are easily adapted to fit this requirement.  This means that all transactions to the mixer must come with merkle proofs of the addition of a new `nullifier`/`commitment` to the withdrawal/deposit trees.  
+
+Because the deposit/trees are append-only, validation of the addition of a nullifier/deposit is a two step process:
+* Checking that the nullifier/deposit was not previously in the tree: replace the merkle proof leaf with `hash(0)` (NULL), compute the root and verify that it is correct against the prestate.
+* Checking that the merkle proof (with the added leaf) is correct.
+
+The mixer state root is formed by `hash(withdrawal_root + deposit_root)`

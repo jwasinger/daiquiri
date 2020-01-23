@@ -23,6 +23,9 @@ function getImports(env) {
       input_data_copy: function(ptr, offset, length) {
         memset(mem, ptr, env.blockData.slice(offset, offset + length));
       },
+      prestate_copy: function(dst) {
+          memset(mem, dst, env.prestate);
+      },
       debug_printMemHex: function(ptr, length) {
         console.log(
           "debug_printMemHex: ",
@@ -52,10 +55,12 @@ function parseYaml(file) {
   for (var i = 0; i < tests.length; i++) {
     var expectedResult = Buffer.from(tests[i].expected, "hex");
     let input = Buffer.from(tests[i].input, "hex");
+    let prestate = Buffer.from(tests[i].prestate, 'hex');
 
     testCases.push({
       input: input,
-      expected: expectedResult
+      expected: expectedResult,
+      prestate
     });
   }
 
@@ -85,7 +90,7 @@ function main() {
     let input = testCase.input;
     var instance = new WebAssembly.Instance(
       wasmModule,
-      getImports({ blockData: input })
+      getImports({ blockData: input, prestate: testCase.prestate })
     );
 
     setMemory(instance.exports.memory);
