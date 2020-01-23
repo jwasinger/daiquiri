@@ -5,6 +5,8 @@ import { bn128_frm_fromMontgomery, bn128_frm_toMontgomery } from "./websnark_bn1
 import { groth16_verify } from "./groth16_verify";
 
 const SIZE_F = 32;
+const SIZE_F1 = SIZE_F * 3;
+
 import { mimc_init, NULL_HASH } from "./mimc.ts";
 
 const p_NULL_HASH = NULL_HASH.buffer as usize;
@@ -36,6 +38,8 @@ export declare function save_output(offset: i32): void;
 const SELECTOR_DEPOSIT: u8 = 0;
 const SELECTOR_WITHDRAW: u8 = 1;
 
+// validates the addition of a leaf (deposit/withdrawal) to the append-only mixer state tree
+// returns the offset input_data + (merkle proof bytes)
 function append_leaf(input_data: usize, p_prestate_root: usize, out_root: usize, is_deposit: bool): usize {
     let p_mixer_root = input_data;
 
@@ -106,15 +110,20 @@ function deposit(input_data: usize, prestate_root: usize, out_root: usize): void
 }
 
 function withdraw(input_data: usize, prestate_root: usize, out_root: usize): void {
-    /*
-    Withdrawal proof is composed of:
-    * Merkle proof that new nullifierHash is in the nullifier tree
-    * A Groth16 proof that Pedersen(nullifier + Secret) is in the commitment tree
-    */
-
     let groth_proof_start: usize = append_leaf(input_data, prestate_root, out_root, false);
 
-    // TODO: verify the post-state root is an input to the ZKP
+    // verify the withdraw post-state root is an input to the ZKP
+    let p_withdraw_root_circuit_input = groth_proof_start + 1348; // TODO: don't hardcode this offset
+    let p_withdraw_root = input_data + SIZE_F;
+
+    bn128_frm_fromMontgomery(p_withdraw_root, p_withdraw_root);
+
+    if(memcmp(p_withdraw_root, p_withdraw_root_circuit_input) != 0) {
+        bn128_frm_toMontgomery(p_withdraw_root, p_withdraw_root);
+        return;
+    }
+
+    bn128_frm_toMontgomery(p_withdraw_root, p_withdraw_root);
 
     if(groth16_verify(groth_proof_start) != 0) {
         debug_mem(0, SIZE_F);
