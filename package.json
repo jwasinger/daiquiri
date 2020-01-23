@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test:relayer": "cd relayer && python3 test.py",
+    "test": "npm run test:deposit && npm run test:withdraw",
     "test:deposit": "node index.js tests/tests-deposit.yml",
     "test:withdraw": "node index.js tests/tests-withdraw.yml",
     "gen_proof": "rm -rf build/proof && mkdir build/proof && npx snarkjs calculatewitness -c build/circuit/merkle_tree.json -i tests/circuit_input.json -w build/proof/witness.json --lo && snarkjs proof -w build/proof/witness.json --public build/proof/public.json --pk build/circuit/merkle_tree_proving_key.json -p build/proof/proof.json",

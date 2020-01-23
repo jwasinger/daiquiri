@@ -93,7 +93,7 @@ function append_leaf(input_data: usize, p_prestate_root: usize, out_root: usize,
     }
 
     if (memcmp(tmp3, p_mixer_root) != 0) {
-        debug_mem(3, SIZE_F);
+        debug_mem(4, SIZE_F);
         return 0;
     }
 
@@ -105,25 +105,20 @@ function deposit(input_data: usize, prestate_root: usize, out_root: usize): void
     append_leaf(input_data, prestate_root, out_root, true);
 }
 
-function withdraw(input_data: usize, prestate_root: usize, out_root: usize): i32 {
+function withdraw(input_data: usize, prestate_root: usize, out_root: usize): void {
     /*
     Withdrawal proof is composed of:
     * Merkle proof that new nullifierHash is in the nullifier tree
     * A Groth16 proof that Pedersen(nullifier + Secret) is in the commitment tree
     */
 
-    let tmp1: usize = (new Uint8Array(SIZE_F)).buffer as usize;
-    let groth_proof_start: usize = append_leaf(input_data, prestate_root, tmp1, false);
+    let groth_proof_start: usize = append_leaf(input_data, prestate_root, out_root, false);
 
-    // verify the post-state root is an input to the ZKP
+    // TODO: verify the post-state root is an input to the ZKP
 
-    // verify the ZKP
-
-    if(groth16_verify(input_data) != 0) {
+    if(groth16_verify(groth_proof_start) != 0) {
         debug_mem(0, SIZE_F);
     }
-
-    return 0;
 }
 
 // TODO make all numbers in the proof expected to be passed in montgomery form
