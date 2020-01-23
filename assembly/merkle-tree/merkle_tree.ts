@@ -22,7 +22,7 @@ export function verify_merkle_proof(p_proof: usize): u32 {
 }
 
 // convert all the field elements in the proof to montgomery form
-export function merkle_proof_init(p_proof: usize): void {
+export function merkle_proof_init(p_proof: usize): usize {
     let root = ( p_proof as usize ); 
     bn128_frm_toMontgomery(root, root);
 
@@ -42,6 +42,8 @@ export function merkle_proof_init(p_proof: usize): void {
 
     let leaf: usize = witnesses + ( num_witnesses as usize * SIZE_F );
     bn128_frm_toMontgomery(leaf, leaf);
+
+    return leaf + SIZE_F;
 }
 
 export function get_proof_size(p_proof: usize): usize {

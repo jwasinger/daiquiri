@@ -36,56 +36,73 @@ export declare function save_output(offset: i32): void;
 const SELECTOR_DEPOSIT: u8 = 0;
 const SELECTOR_WITHDRAW: u8 = 1;
 
-function deposit(input_data: usize, prestate_root: usize, out_root: usize): void {
-    let mixer_root = input_data;
-    let withdraw_root = mixer_root + SIZE_F;
-    let deposit_proof = withdraw_root + SIZE_F;
-    let deposit_root = deposit_proof;
+function append_leaf(input_data: usize, p_prestate_root: usize, out_root: usize, is_deposit: bool): usize {
+    let p_mixer_root = input_data;
 
-    merkle_proof_init(deposit_proof);
+    // represents either the withdraw or deposit root
+    let p_last_witness = p_mixer_root + SIZE_F;
+    let p_merkle_proof = p_last_witness + SIZE_F;
+    let p_merkle_root = p_merkle_proof;
+
+    merkle_proof_init(p_merkle_proof);
 
     let tmp1: usize = (new Uint8Array(SIZE_F)).buffer as usize;
     let tmp2: usize = (new Uint8Array(SIZE_F)).buffer as usize;
     let tmp3: usize = (new Uint8Array(SIZE_F)).buffer as usize;
-    
-    // TODO no hardcode
-    let p_proof_leaf = deposit_proof + 40 + 20 + 20 * SIZE_F;
 
-    // take the proof and replace the leaf (deposit) with null, verify that the computed root was the prestate root
+    let p_proof_leaf = p_merkle_proof + 40 + 20 + 20 * SIZE_F;
 
-    bn128_frm_toMontgomery(prestate_root, prestate_root);
-    bn128_frm_toMontgomery(withdraw_root, withdraw_root);
-    bn128_frm_toMontgomery(mixer_root, mixer_root);
+    bn128_frm_toMontgomery(p_prestate_root, p_prestate_root);
+    bn128_frm_toMontgomery(p_last_witness, p_last_witness);
+    bn128_frm_toMontgomery(p_mixer_root, p_mixer_root);
 
-    // TODO replace memcpy's with pointer swapping if possible
-    memcpy(tmp1, mixer_root);
+    // ensure the leaf was not previously in the tree 
+    // i.e. replacing the leaf with NULL and calculating the mixer root 
+    // should yield the prestate
+
+    memcpy(tmp1, p_mixer_root);
     memcpy(tmp2, p_proof_leaf);
 
-    memcpy(mixer_root, prestate_root);
+    memcpy(p_mixer_root, p_prestate_root);
     memcpy(p_proof_leaf, p_NULL_HASH);
 
-    compute_root(deposit_proof, deposit_root);
-    mimc_compress2(deposit_root, withdraw_root, tmp3);
-
-    if (memcmp(tmp3, mixer_root) != 0) {
-        debug_mem(3, SIZE_F);
-        return
+    compute_root(p_merkle_proof, p_merkle_root);
+    
+    if (is_deposit) {
+        mimc_compress2(p_merkle_root, p_last_witness, tmp3);
+    } else {
+        mimc_compress2(p_last_witness, p_merkle_root, tmp3);
     }
 
-    // re-insert the leaf and verify the merkle proof
+    if (memcmp(tmp3, p_prestate_root) != 0) {
+        debug_mem(3, SIZE_F);
+        return 0;
+    }
 
-    memcpy(mixer_root, tmp1);
+    // calculate the new mixer root based on the addition of a commitment/nullifier
+
+    memcpy(p_mixer_root, tmp1);
     memcpy(p_proof_leaf, tmp2);
 
-    compute_root(deposit_proof, deposit_root);
-    mimc_compress2(deposit_root, withdraw_root, tmp3);
+    compute_root(p_merkle_proof, p_merkle_root);
 
-    if (memcmp(tmp3, mixer_root) != 0) {
-        debug_mem(3, SIZE_F);
-        return
+    if (is_deposit) {
+        mimc_compress2(p_merkle_root, p_last_witness, tmp3);
+    } else {
+        mimc_compress2(p_last_witness, p_merkle_root, tmp3);
     }
 
-    bn128_frm_fromMontgomery(mixer_root, out_root);
+    if (memcmp(tmp3, p_mixer_root) != 0) {
+        debug_mem(3, SIZE_F);
+        return 0;
+    }
+
+    bn128_frm_fromMontgomery(p_mixer_root, out_root);
+    return p_proof_leaf + SIZE_F;
+}
+
+function deposit(input_data: usize, prestate_root: usize, out_root: usize): void {
+    append_leaf(input_data, prestate_root, out_root, true);
 }
 
 function withdraw(input_data: usize, prestate_root: usize, out_root: usize): i32 {
@@ -95,9 +112,8 @@ function withdraw(input_data: usize, prestate_root: usize, out_root: usize): i32
     * A Groth16 proof that Pedersen(nullifier + Secret) is in the commitment tree
     */
 
-    // verify the nullifier merkle proof against the mixer prestate
-
-    let groth_proof_start: usize = 0;
+    let tmp1: usize = (new Uint8Array(SIZE_F)).buffer as usize;
+    let groth_proof_start: usize = append_leaf(input_data, prestate_root, tmp1, false);
 
     // verify the post-state root is an input to the ZKP
 
