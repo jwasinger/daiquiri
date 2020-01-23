@@ -12,7 +12,7 @@ const p_NULL_HASH = NULL_HASH.buffer as usize;
 // root for an empty tree of depth 20
 export const NULL_ROOT: Array<u64> = [ 0xd6b781f439c20c0b, 0x5d00fc101129f08f, 0x137981fece56e977, 0x04af9e46dbc42b94 ];
 
-import { verify_merkle_proof, merkle_proof_init } from "./merkle_tree.ts";
+import { verify_merkle_proof, merkle_proof_init, compute_root } from "./merkle_tree.ts";
 
 import { mimc_compress2 } from "./mimc.ts";
 
@@ -33,6 +33,9 @@ export declare function prestate_copy(dst: i32): void;
 @external("env", "save_output")
 export declare function save_output(offset: i32): void;
 
+const SELECTOR_DEPOSIT: u8 = 0;
+const SELECTOR_WITHDRAW: u8 = 1;
+
 function deposit(input_data: usize, prestate_root: usize, out_root: usize): void {
     let mixer_root = input_data;
     let withdraw_root = mixer_root + SIZE_F;
@@ -43,6 +46,7 @@ function deposit(input_data: usize, prestate_root: usize, out_root: usize): void
 
     let tmp1: usize = (new Uint8Array(SIZE_F)).buffer as usize;
     let tmp2: usize = (new Uint8Array(SIZE_F)).buffer as usize;
+    let tmp3: usize = (new Uint8Array(SIZE_F)).buffer as usize;
     
     // TODO no hardcode
     let p_proof_leaf = deposit_proof + 40 + 20 + 20 * SIZE_F;
@@ -51,35 +55,32 @@ function deposit(input_data: usize, prestate_root: usize, out_root: usize): void
 
     bn128_frm_toMontgomery(prestate_root, prestate_root);
     bn128_frm_toMontgomery(withdraw_root, withdraw_root);
+    bn128_frm_toMontgomery(mixer_root, mixer_root);
 
     // TODO replace memcpy's with pointer swapping if possible
-    memcpy(tmp1, deposit_root);
+    memcpy(tmp1, mixer_root);
     memcpy(tmp2, p_proof_leaf);
 
-    // TODO: need to place the prestate root in mixer root and recalculate the mixer root
-    memcpy(deposit_root, prestate_root);
+    memcpy(mixer_root, prestate_root);
     memcpy(p_proof_leaf, p_NULL_HASH);
 
-    if (verify_merkle_proof(deposit_proof) != 0) {
-        debug_mem(1, SIZE_F);
+    compute_root(deposit_proof, deposit_root);
+    mimc_compress2(deposit_root, withdraw_root, tmp3);
+
+    if (memcmp(tmp3, mixer_root) != 0) {
+        debug_mem(3, SIZE_F);
         return
     }
 
     // re-insert the leaf and verify the merkle proof
 
-    memcpy(deposit_root, tmp1);
+    memcpy(mixer_root, tmp1);
     memcpy(p_proof_leaf, tmp2);
 
-    if (verify_merkle_proof(deposit_proof) != 0) {
-        debug_mem(2, SIZE_F);
-        return;
-    }
+    compute_root(deposit_proof, deposit_root);
+    mimc_compress2(deposit_root, withdraw_root, tmp3);
 
-    bn128_frm_toMontgomery(mixer_root, mixer_root);
-
-    mimc_compress2(deposit_root, withdraw_root, tmp1);
-
-    if (memcmp(tmp1, mixer_root) != 0) {
+    if (memcmp(tmp3, mixer_root) != 0) {
         debug_mem(3, SIZE_F);
         return
     }
@@ -106,7 +107,6 @@ function withdraw(input_data: usize, prestate_root: usize, out_root: usize): i32
         debug_mem(0, SIZE_F);
     }
 
-    // update the post state
     return 0;
 }
 
@@ -116,14 +116,25 @@ export function main(): i32 {
     let input_data_buff = new ArrayBuffer(input_data_len);
     input_data_copy(input_data_buff as usize, 0, input_data_len);
 
+    let selector = load<u8>(input_data_buff as usize); 
     let prestate = new Uint8Array(SIZE_F);
     let result = new Uint8Array(SIZE_F);
+    let input_data_start = input_data_buff as usize + 1;
 
     prestate_copy(prestate.buffer as usize);
 
     mimc_init();
 
-    withdraw(input_data_buff as usize, prestate.buffer as usize, result.buffer as usize);
+    if (selector == SELECTOR_DEPOSIT) {
+        deposit(input_data_start, prestate.buffer as usize, result.buffer as usize);
+    } else if(selector == SELECTOR_WITHDRAW) {
+        withdraw(input_data_start, prestate.buffer as usize, result.buffer as usize);
+    } else {
+        // invalid selector
+        // throw exception
+    }
+
+    // withdraw(input_data_buff as usize, prestate.buffer as usize, result.buffer as usize);
     
     //deposit(input_data_buff as usize, prestate.buffer as usize, result.buffer as usize);
 

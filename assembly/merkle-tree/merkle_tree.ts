@@ -54,7 +54,7 @@ export function compute_proof(p_proof: usize): void {
     compute_root(p_proof, p_proof_root);
 }
 
-export function compute_root(p_proof: usize, p_out_root: usize): void {
+export function compute_root(p_proof: usize, p_out_root: usize): usize {
     let root = ( p_proof as usize ); 
 
     // TODO: index/num_witnesses are serialized as u64 and casted to usize which could cause overflow.
@@ -134,4 +134,6 @@ export function compute_root(p_proof: usize, p_out_root: usize): void {
     bn128_frm_toMontgomery(root, root);
     bn128_frm_toMontgomery(p_out_root, p_out_root);
     */
+
+    return witnesses + SIZE_F * num_witnesses as usize;
 }
