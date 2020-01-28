@@ -20,10 +20,10 @@ var memget = function(mem, offset, length) {
 function getImports(env) {
   return {
     env: {
-      input_data_copy: function(ptr, offset, length) {
+      eth2_blockDataCopy: function(ptr, offset, length) {
         memset(mem, ptr, env.blockData.slice(offset, offset + length));
       },
-      prestate_copy: function(dst) {
+      eth2_loadPrestateRoot: function(dst) {
           memset(mem, dst, env.prestate);
       },
       debug_printMemHex: function(ptr, length) {
@@ -34,10 +34,10 @@ function getImports(env) {
           memget(mem, ptr, length).toString("hex")
         );
       },
-      save_output: function(ptr) {
+      eth2_savePostStateRoot: function(ptr) {
         res = memget(mem, ptr, 32);
       },
-      input_size: function() {
+      eth2_blockDataSize: function() {
         return env.blockData.byteLength;
       }
     }

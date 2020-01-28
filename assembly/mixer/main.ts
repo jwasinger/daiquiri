@@ -23,16 +23,16 @@ import { memcpy, memcmp } from "./util.ts";
 @external("env", "debug_printMemHex")
 export declare function debug_mem(pos: i32, len: i32): void;
 
-@external("env", "input_size")
+@external("env", "eth2_blockDataSize")
 export declare function input_size(): i32;
 
-@external("env", "input_data_copy")
+@external("env", "eth2_blockDataCopy")
 export declare function input_data_copy(outputOffset: i32, srcOffset: i32, length: i32): void;
 
-@external("env", "prestate_copy")
+@external("env", "eth2_loadPrestateRoot")
 export declare function prestate_copy(dst: i32): void;
 
-@external("env", "save_output")
+@external("env", "eth2_savePostStateRoot")
 export declare function save_output(offset: i32): void;
 
 const SELECTOR_DEPOSIT: u8 = 0;
