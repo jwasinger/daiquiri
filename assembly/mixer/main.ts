@@ -29,7 +29,7 @@ export declare function input_size(): i32;
 @external("env", "eth2_blockDataCopy")
 export declare function input_data_copy(outputOffset: i32, srcOffset: i32, length: i32): void;
 
-@external("env", "eth2_loadPrestateRoot")
+@external("env", "eth2_loadPreStateRoot")
 export declare function prestate_copy(dst: i32): void;
 
 @external("env", "eth2_savePostStateRoot")

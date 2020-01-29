@@ -23,7 +23,7 @@ function getImports(env) {
       eth2_blockDataCopy: function(ptr, offset, length) {
         memset(mem, ptr, env.blockData.slice(offset, offset + length));
       },
-      eth2_loadPrestateRoot: function(dst) {
+      eth2_loadPreStateRoot: function(dst) {
           memset(mem, dst, env.prestate);
       },
       debug_printMemHex: function(ptr, length) {
