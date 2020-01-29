@@ -44,9 +44,10 @@ function getImports(env) {
   };
 }
 
+/*
 function parseYaml(file) {
-  var testCase = js_yaml.safeLoad(file);
-  var wasm_source = testCase.merkle_tree_source;
+  var test_cases = js_yaml.safeLoad(file);
+  var wasm_source = test_cases 
 
   var testCases = [];
   let tests = Object.values(testCase.tests);
@@ -69,6 +70,38 @@ function parseYaml(file) {
     testSource: wasm_source 
   };
 }
+*/
+function parseYaml (file) {
+  let file_contents = fs.readFileSync(file)
+  const testCase = js_yaml.safeLoad(file_contents)
+  const scripts = testCase.beacon_state.execution_scripts
+  const shardBlocks = testCase.shard_blocks
+  const testCases = []
+  for (let i = 0; i < scripts.length; i++) {
+    const script = scripts[i]
+    const preStateRoot = Buffer.from(testCase.shard_pre_state.exec_env_states[i], 'hex')
+    const postStateRoot = Buffer.from(testCase.shard_post_state.exec_env_states[i], 'hex')
+    assert(preStateRoot.length === 32)
+    assert(postStateRoot.length === 32)
+
+    const blocks = []
+    for (let b of shardBlocks) {
+      if (parseInt(b.env, 10) === i) {
+        blocks.push(Buffer.from(b.data, 'hex'))
+      }
+    }
+
+    testCases.push({
+      script,
+      preStateRoot,
+      postStateRoot,
+      blocks
+    })
+  }
+
+
+  return testCases
+}
 
 function main() {
   var yamlPath;
@@ -79,36 +112,39 @@ function main() {
   } else {
     throw new Error("invalid args");
   }
-  var yamlFile = fs.readFileSync(yamlPath, { encoding: "utf8" });
-  var testCases = parseYaml(yamlFile);
 
-  var wasmFile = fs.readFileSync(testCases.testSource);
-  var wasmModule = new WebAssembly.Module(wasmFile);
+  let testCases = parseYaml(yamlPath)
 
-  for (var i = 0; i < testCases.tests.length; i++) {
-    var testCase = testCases.tests[i];
-    let input = testCase.input;
-    var instance = new WebAssembly.Instance(
-      wasmModule,
-      getImports({ blockData: input, prestate: testCase.prestate })
-    );
+  for (var i = 0; i < testCases.length; i++) {
+    var testCase = testCases[i];
+    var wasmFile = fs.readFileSync(testCase.script);
+    var wasmModule = new WebAssembly.Module(wasmFile);
+    let prestate = testCase.preStateRoot;
+    let poststate = testCase.postStateRoot;
 
-    setMemory(instance.exports.memory);
-    var t = process.hrtime();
+    for (var j = 0; j < testCase.blocks.length; j++) {
+        let block_data = testCase.blocks[j];
+        var instance = new WebAssembly.Instance(
+          wasmModule,
+          getImports({ blockData: block_data, prestate: prestate })
+        );
 
-    instance.exports.main();
-    t = process.hrtime(t);
-    console.log(
-      "benchmark took %d seconds and %d nanoseconds (%dms)",
-      t[0],
-      t[1],
-      t[1] / 1000000
-    );
-    preStateRoot = res;
+        setMemory(instance.exports.memory);
+        var t = process.hrtime();
+
+        instance.exports.main();
+        t = process.hrtime(t);
+        console.log(
+          "benchmark took %d seconds and %d nanoseconds (%dms)",
+          t[0],
+          t[1],
+          t[1] / 1000000
+        );
+    }
     assert(
-      testCase.expected.equals(res),
+      testCase.postStateRoot.equals(res),
       "expected " +
-        testCase.expected.toString("hex") +
+        testCase.postStateRoot.toString("hex") +
         ", received " +
         res.toString("hex")
     );
