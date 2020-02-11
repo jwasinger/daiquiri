@@ -16,8 +16,6 @@ export function verify_merkle_proof(p_proof: usize): u32 {
 
     compute_root(p_proof, p_computed_root);
 
-    //debug_mem(p_computed_root, SIZE_F);
-
     return memcmp(p_computed_root, p_proof_root);
 }
 
@@ -75,67 +73,19 @@ export function compute_root(p_proof: usize, p_out_root: usize): usize {
         mimc_compress2(witnesses, leaf, p_out_root);
     }
 
-    /*
-    bn128_frm_fromMontgomery(p_out_root, p_out_root);
-    bn128_frm_fromMontgomery(leaf, leaf);
-    bn128_frm_fromMontgomery(NULL_HASH.buffer as usize, NULL_HASH.buffer as usize);
-    bn128_frm_fromMontgomery(witnesses, witnesses);
-
-    debug_mem(leaf, SIZE_F);
-    debug_mem(witnesses, SIZE_F);
-    debug_mem(p_out_root, SIZE_F);
-    debug_mem(420, SIZE_F);
-
-    bn128_frm_toMontgomery(NULL_HASH.buffer as usize, NULL_HASH.buffer as usize);
-    bn128_frm_toMontgomery(witnesses, witnesses);
-    bn128_frm_toMontgomery(leaf, leaf);
-    bn128_frm_toMontgomery(p_out_root, p_out_root);
-    */
-
     p_selectors++;
     selector = load<u8>(p_selectors);
 
     for (let i: usize = 1; i < num_witnesses; i++) {
-        /*
-        bn128_frm_fromMontgomery(p_out_root, p_out_root);
-        debug_mem(p_out_root, SIZE_F);
-        bn128_frm_toMontgomery(p_out_root, p_out_root);
-        */
-
         if (selector == 0) {
             mimc_compress2(p_out_root, witnesses + i * SIZE_F, p_out_root);
         } else {
             mimc_compress2(witnesses + i * SIZE_F, p_out_root, p_out_root);
         }
 
-        /*
-        bn128_frm_fromMontgomery(witnesses + i * SIZE_F, witnesses + i * SIZE_F);
-        bn128_frm_fromMontgomery(p_out_root, p_out_root);
-        
-        debug_mem(witnesses + i * SIZE_F, SIZE_F);
-        debug_mem(p_out_root, SIZE_F);
-        debug_mem(p_selectors, 1);
-        debug_mem(420, SIZE_F);
-
-        bn128_frm_toMontgomery(witnesses + i * SIZE_F, witnesses + i * SIZE_F);
-        bn128_frm_toMontgomery(p_out_root, p_out_root);
-        */
-
-        // debug_mem(p_selectors, 1);
         p_selectors++;
         selector = load<u8>(p_selectors);
     }
-
-    /*
-    bn128_frm_fromMontgomery(root, root);
-    bn128_frm_fromMontgomery(p_out_root, p_out_root);
-
-    debug_mem(root, SIZE_F);
-    debug_mem(p_out_root, SIZE_F);
-
-    bn128_frm_toMontgomery(root, root);
-    bn128_frm_toMontgomery(p_out_root, p_out_root);
-    */
 
     return witnesses + SIZE_F * num_witnesses as usize;
 }

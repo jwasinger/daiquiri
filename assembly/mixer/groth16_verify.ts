@@ -19,15 +19,6 @@ export function groth16_verify(p_input_data: usize): i32 {
   let p_b = p_a + 96;
   let p_c = p_b + 192;
 
-  bn128_g1m_toMontgomery(p_vk_alfa1, p_vk_alfa1);
-  bn128_g2m_toMontgomery(p_vk_beta2, p_vk_beta2);
-  bn128_g2m_toMontgomery(p_vk_delta2, p_vk_delta2);
-  bn128_g2m_toMontgomery(p_vk_gamma2, p_vk_gamma2);
-
-  bn128_g1m_toMontgomery(p_a, p_a);
-  bn128_g2m_toMontgomery(p_b, p_b);
-  bn128_g1m_toMontgomery(p_c, p_c);
-
   let num_ic = load<u32>(p_c + 96);
 
   // input constraints (f1(?) elements)
@@ -40,13 +31,10 @@ export function groth16_verify(p_input_data: usize): i32 {
   let p_input_start = p_ic_start + num_ic * SIZE_F1;
 
   let p_ic = p_ic_start;
-  bn128_g1m_toMontgomery(p_ic, p_ic);
 
   for (let i = 0 as usize; i < num_input; i++ ) {
     // ic_aux <== IC[i+1]
     let p_ic_aux = p_ic + ((i + 1) * SIZE_F1);
-
-    bn128_g1m_toMontgomery(p_ic_aux, p_ic_aux);
 
     let p_ic_r = p_input_start + (i * SIZE_F);
 
