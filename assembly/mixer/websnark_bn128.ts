@@ -46,6 +46,12 @@ export declare function bn128_g1m_add(p0: i32, p1: i32, p2: i32): void;
 @external("watimports", "$bn128_g1m_affine")
 export declare function bn128_g1m_affine(p0: i32, p1: i32): void;
 
+@external("watimports", "$bn128_g1m_double")
+export declare function bn128_g1m_double(p0: i32, p1: i32): void;
+
+@external("watimports", "$bn128_f1m_square")
+export declare function bn128_f1m_square(p0: i32, p1: i32): void;
+
 // This line causes a bug with the asc compiler
 // @external("watimports", "$int_gte")
 // export declare function int_gte(p0: i32, p1: i32): void;

@@ -112,11 +112,14 @@ function mergeAndWriteWasm(useBignumHostFuncs, finalFileName) {
     bnFuncsRenamed = bnFuncsRenamed.replace(/\$g1m_timesScalar/g, "\$websnark_bn128/bn128_g1m_timesScalar");
     bnFuncsRenamed = bnFuncsRenamed.replace(/\$g1m_add/g, "\$websnark_bn128/bn128_g1m_add");
 
+    bnFuncsRenamed = bnFuncsRenamed.replace(/\$g1m_double/g, "\$websnark_bn128/bn128_g1m_double");
+
     bnFuncsRenamed = bnFuncsRenamed.replace(/\$int_zero/g, "\$websnark_bn128/bn128_frm_zero");
     bnFuncsRenamed = bnFuncsRenamed.replace(/\$frm_add/g, "\$websnark_bn128/bn128_frm_add");
     bnFuncsRenamed = bnFuncsRenamed.replace(/\$frm_mul/g, "\$websnark_bn128/bn128_frm_mul");
     bnFuncsRenamed = bnFuncsRenamed.replace(/\$frm_fromMontgomery/g, "\$websnark_bn128/bn128_frm_fromMontgomery");
     bnFuncsRenamed = bnFuncsRenamed.replace(/\$frm_toMontgomery/g, "\$websnark_bn128/bn128_frm_toMontgomery");
+    bnFuncsRenamed = bnFuncsRenamed.replace(/\$f1m_square/g, "\$websnark_bn128/bn128_f1m_square");
 
     bnFuncsRenamed = bnFuncsRenamed.replace(/\$fr_mul/g, "\$websnark_bn128/bn128_fr_mul");
 
