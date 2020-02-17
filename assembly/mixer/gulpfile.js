@@ -120,6 +120,7 @@ function mergeAndWriteWasm(useBignumHostFuncs, finalFileName) {
     bnFuncsRenamed = bnFuncsRenamed.replace(/\$frm_fromMontgomery/g, "\$websnark_bn128/bn128_frm_fromMontgomery");
     bnFuncsRenamed = bnFuncsRenamed.replace(/\$frm_toMontgomery/g, "\$websnark_bn128/bn128_frm_toMontgomery");
     bnFuncsRenamed = bnFuncsRenamed.replace(/\$f1m_square/g, "\$websnark_bn128/bn128_f1m_square");
+    bnFuncsRenamed = bnFuncsRenamed.replace(/\$ftm_mul/g, "\$websnark_bn128/bn128_ftm_mul");
 
     bnFuncsRenamed = bnFuncsRenamed.replace(/\$fr_mul/g, "\$websnark_bn128/bn128_fr_mul");
 
@@ -202,7 +203,8 @@ function mergeAndWriteWasm(useBignumHostFuncs, finalFileName) {
         let bnUsingBignumFuncs = bnFuncsWat;
 
         bnUsingBignumFuncs = bnUsingBignumFuncs.replace(/\(call \$f1m_mul/g, "\(call \$main/bignum_f1m_mul");
-        bnUsingBignumFuncs = bnUsingBignumFuncs.replace(/\(call \$f1m_square/g, "\(call \$main/bignum_f1m_square");
+        debugger
+        bnUsingBignumFuncs = bnUsingBignumFuncs.replace(/\(call \$websnark_bn128\/bn128_f1m_square/g, "\(call \$main/bignum_f1m_square");
         bnUsingBignumFuncs = bnUsingBignumFuncs.replace(/\(call \$f1m_add/g, "\(call \$main/bignum_f1m_add");
         bnUsingBignumFuncs = bnUsingBignumFuncs.replace(/\(call \$f1m_sub/g, "\(call \$main/bignum_f1m_sub");
 

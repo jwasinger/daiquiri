@@ -75,3 +75,6 @@ export declare function bn128_frm_toMontgomery(input: i32, output: i32): void;
 
 @external("watimports", "$bn128_frm_fromMontgomery")
 export declare function bn128_frm_fromMontgomery(input: i32, output: i32): void;
+
+@external("watimports", "$bn128_ftm_mul")
+export declare function bn128_ftm_mul(p1: i32, p2: i32, output: i32): void;
