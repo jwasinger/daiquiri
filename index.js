@@ -166,7 +166,7 @@ function getImports(env) {
         return env.blockData.byteLength;
       },
       ...buildBnAPI(bn128_fields.fq, 'bignum_f1m'),
-      ...buildBnAPI(bn128_fields.fr, 'bignum_fr'),
+      ...buildBnAPI(bn128_fields.fr, 'bignum_frm'),
       bignum_int_add: (aOffset, bOffset, outOffset) => {
         const a = new BN(memget(mem, aOffset, 32), 'le');
         const b = new BN(memget(mem, bOffset, 32), 'le');

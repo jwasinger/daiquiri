@@ -143,10 +143,19 @@ function mergeAndWriteWasm(useBignumHostFuncs, finalFileName) {
         const bignumIntSubImport = '(import "env" "bignum_int_sub" (func $main/bignum_int_sub (param i32 i32 i32) (result i32)))';
         const bignumIntDivImport = '(import "env" "bignum_int_div" (func $main/bignum_int_div (param i32 i32 i32 i32)))';
 
+        const bignumfrmToMontImport = '(import "env" "bignum_frm_toMontgomery" (func $main/bignum_frm_toMontgomery (param i32 i32)))';
+        const bignumfrmFromMontImport = '(import "env" "bignum_frm_fromMontgomery" (func $main/bignum_frm_fromMontgomery (param i32 i32)))';
+        const bignumfrmMulImport = '(import "env" "bignum_frm_mul" (func $main/bignum_frm_mul (param i32 i32 i32)))';
+        const bignumfrmSqrImport = '(import "env" "bignum_frm_square" (func $main/bignum_frm_square (param i32 i32)))';
+        const bignumfrmAddImport = '(import "env" "bignum_frm_add" (func $main/bignum_frm_add (param i32 i32 i32)))';
+        const bignumfrmSubImport = '(import "env" "bignum_frm_sub" (func $main/bignum_frm_sub (param i32 i32 i32)))';
+
 
         const bignumImportStatements = [bignumf1mToMontImport, bignumf1mFromMontImport,
                                         bignumf1mMulImport, bignumf1mAddImport, bignumf1mSubImport, bignumf1mSqrImport,
-                                        bignumIntMulImport, bignumIntAddImport, bignumIntSubImport, bignumIntDivImport];
+                                        bignumIntMulImport, bignumIntAddImport, bignumIntSubImport, bignumIntDivImport,
+                                        bignumfrmToMontImport, bignumfrmFromMontImport, bignumfrmMulImport, bignumfrmSqrImport,
+                                        bignumfrmAddImport, bignumfrmSubImport];
 
 
 
@@ -205,6 +214,14 @@ function mergeAndWriteWasm(useBignumHostFuncs, finalFileName) {
 
         bnUsingBignumFuncs = bnUsingBignumFuncs.replace(/\(call \$f1m_toMontgomery/g, "\(call \$main/bignum_f1m_toMontgomery");
         bnUsingBignumFuncs = bnUsingBignumFuncs.replace(/\(call \$f1m_fromMontgomery/g, "\(call \$main/bignum_f1m_fromMontgomery");
+
+        bnUsingBignumFuncs = bnUsingBignumFuncs.replace(/\(call \$frm_mul/g, "\(call \$main/bignum_frm_mul");
+        bnUsingBignumFuncs = bnUsingBignumFuncs.replace(/\(call \$frm_square/g, "\(call \$main/bignum_frm_square");
+        bnUsingBignumFuncs = bnUsingBignumFuncs.replace(/\(call \$frm_add/g, "\(call \$main/bignum_frm_add");
+        bnUsingBignumFuncs = bnUsingBignumFuncs.replace(/\(call \$frm_sub/g, "\(call \$main/bignum_frm_sub");
+
+        bnUsingBignumFuncs = bnUsingBignumFuncs.replace(/\(call \$frm_toMontgomery/g, "\(call \$main/bignum_frm_toMontgomery");
+        bnUsingBignumFuncs = bnUsingBignumFuncs.replace(/\(call \$frm_fromMontgomery/g, "\(call \$main/bignum_frm_fromMontgomery");
 
         bnUsingBignumFuncs = bnUsingBignumFuncs.replace(/\(call \$int_mul/g, "\(call \$main/bignum_int_mul");
         bnUsingBignumFuncs = bnUsingBignumFuncs.replace(/\(call \$int_add/g, "\(call \$main/bignum_int_add");
