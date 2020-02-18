@@ -19,43 +19,127 @@ var memget = function(mem, offset, length) {
   return Buffer.from(new Uint8Array(mem.buffer, offset, length));
 };
 
+let bn128_fields = {
+    'fq': {
+        field_modulus: new BN('30644e72e131a029b85045b68181585d97816a916871ca8d3c208c16d87cfd47', 16),
+        r_inv: new BN('9ede7d651eca6ac987d20782e4866389', 16),
+        r_squared: new BN('06d89f71cab8351f47ab1eff0a417ff6b5e71911d44501fbf32cfc5b538afa89', 16)
+    },
+    'fr': {
+        field_modulus: new BN('21888242871839275222246405745257275088548364400416034343698204186575808495617', 16),
+        r_inv: new BN('6586864b4c6911b3c2e1f593efffffff', 16),
+        r_squared: new BN('944936681149208446651664254269745548490766851729442924617792859073125903783')
+
+    }
+}
 // 0x30644e72e131a029b85045b68181585d97816a916871ca8d3c208c16d87cfd47
+/*
 var bn128_field_modulus = new BN('30644e72e131a029b85045b68181585d97816a916871ca8d3c208c16d87cfd47', 16);
 var bn128_r_inv = new BN('9ede7d651eca6ac987d20782e4866389', 16);
 var bn128_r_squared = new BN('06d89f71cab8351f47ab1eff0a417ff6b5e71911d44501fbf32cfc5b538afa89', 16)
+*/
 
 const MASK_256 = new BN('ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff', 16);
 
+/*
 var field_modulus = bn128_field_modulus;
 var r_inv = bn128_r_inv;
 var r_squared = bn128_r_squared;
+*/
 
-function addmod(a, b) {
+function addmod(a, b, field) {
   var res = a.add(b);
-  if (res.cmp(field_modulus) >= 0) {
-    res.isub(field_modulus);
+  if (res.cmp(field.field_modulus) >= 0) {
+    res.isub(field.field_modulus);
   }
   return res
 }
 
-function submod(a, b) {
+function submod(a, b, field) {
   var res = a.sub(b);
   if (res.cmpn(0) < 0) {
-    res.iadd(field_modulus);
+    res.iadd(field.field_modulus);
   }
   return res
 }
 
-function mulmodmont(a, b) {
+function mulmodmont(a, b, field) {
   var t = a.mul(b);
-  var k0 = t.mul(r_inv).maskn(128);
-  var res2 = k0.mul(field_modulus).add(t).shrn(128);
-  var k1 = res2.mul(r_inv).maskn(128);
-  var result = k1.mul(field_modulus).add(res2).shrn(128);
-  if (result.gt(field_modulus)) {
-    result = result.sub(field_modulus)
+  var k0 = t.mul(field.r_inv).maskn(128);
+  var res2 = k0.mul(field.field_modulus).add(t).shrn(128);
+  var k1 = res2.mul(field.r_inv).maskn(128);
+  var result = k1.mul(field.field_modulus).add(res2).shrn(128);
+  if (result.gt(field.field_modulus)) {
+    result = result.sub(field.field_modulus)
   }
   return result
+}
+
+function buildBnAPI(field, prefix) {
+    let result = {}
+      // modular multiplication of two numbers in montgomery form (i.e. montgomery multiplication)
+      result[prefix + '_mul'] = (aOffset, bOffset, rOffset) => {
+        const a = new BN(memget(mem, aOffset, 32), 'le')
+        const b = new BN(memget(mem, bOffset, 32), 'le')
+
+        var result = mulmodmont(a, b, field);
+
+        //console.log('bignum_f1m_mul a:', a.toString())
+        //console.log('bignum_f1m_mul b:', b.toString())
+        //console.log('bignum_f1m_mul result:', result.toString())
+
+        var result_le = result.toArrayLike(Buffer, 'le', 32);
+
+        memset(mem, rOffset, result_le)
+      }
+
+      result[prefix + '_square'] = (inOffset, outOffset) => {
+        const in_param = new BN(memget(mem, inOffset, 32), 'le');
+        var result = mulmodmont(in_param, in_param, field);
+
+        var result_le = result.toArrayLike(Buffer, 'le', 32)
+        memset(mem, outOffset, result_le)
+      }
+
+      result[prefix + '_add'] = (aOffset, bOffset, outOffset) => {
+        const a = new BN(memget(mem, aOffset, 32), 'le');
+        const b = new BN(memget(mem, bOffset, 32), 'le');
+        var result = addmod(a, b, field);
+
+        var result_le = result.toArrayLike(Buffer, 'le', 32)
+
+        memset(mem, outOffset, result_le)
+      }
+
+      result[prefix + '_sub'] = (aOffset, bOffset, outOffset) => {
+        const a = new BN(memget(mem, aOffset, 32), 'le');
+        const b = new BN(memget(mem, bOffset, 32), 'le');
+        var result = submod(a, b, field);
+
+        var result_le = result.toArrayLike(Buffer, 'le', 32)
+        memset(mem, outOffset, result_le)
+      }
+
+      result[prefix + '_toMontgomery'] = (inOffset, outOffset) => {
+        const in_param = new BN(memget(mem, inOffset, 32), 'le');
+
+        var result = mulmodmont(in_param, field.r_squared, field);
+        var result_le = result.toArrayLike(Buffer, 'le', 32)
+
+        memset(mem, outOffset, result_le)
+      }
+
+      result[prefix + '_fromMontgomery'] = (inOffset, outOffset) => {
+        const in_param = new BN(memget(mem, inOffset, 32), 'le');
+
+        var one = new BN('1', 16);
+        var result = mulmodmont(in_param, one, field);
+        var result_le = result.toArrayLike(Buffer, 'le', 32)
+
+        memset(mem, outOffset, result_le)
+      }
+
+      return result
 }
 
 function getImports(env) {
@@ -81,95 +165,8 @@ function getImports(env) {
       eth2_blockDataSize: function() {
         return env.blockData.byteLength;
       },
-      bignum_add256: (aOffset, bOffset, cOffset) => {
-        const a = new BN(memget(mem, aOffset, 32))
-        const b = new BN(memget(mem, bOffset, 32))
-        const c = a.add(b).mod(TWO_POW256).toArrayLike(Buffer, 'be', 32)
-        memset(mem, cOffset, c)
-      },
-      bignum_mul256: (aOffset, bOffset, cOffset) => {
-        const a = new BN(memget(mem, aOffset, 32))
-        const b = new BN(memget(mem, bOffset, 32))
-        const c = a.mul(b).mod(TWO_POW256).toArrayLike(Buffer, 'be', 32)
-        memset(mem, cOffset, c)
-      },
-      bignum_sub256: (aOffset, bOffset, cOffset) => {
-        const a = new BN(memget(mem, aOffset, 32))
-        const b = new BN(memget(mem, bOffset, 32))
-        const c = a.sub(b).toTwos(256).toArrayLike(Buffer, 'be', 32)
-        memset(mem, cOffset, c)
-      },
-      bignum_div256: (aOffset, bOffset, cOffset) => {
-        const a = new BN(memget(mem, aOffset, 32))
-        const b = new BN(memget(mem, bOffset, 32))
-        if (b.isZero()) throw new Error('division by zero')
-        const c = a.div(b).toArrayLike(Buffer, 'be', 32)
-        memset(mem, cOffset, c)
-      },
-      bignum_mulMod: (aOffset, bOffset, cOffset, rOffset) => {
-        const a = new BN(memget(mem, aOffset, 32))
-        const b = new BN(memget(mem, bOffset, 32))
-        const c = new BN(memget(mem, cOffset, 32))
-        if (c.isZero()) throw new Error('modulus is zero')
-        const r = a.mul(b).mod(c).toArrayLike(Buffer, 'be', 32)
-        memset(mem, rOffset, r)
-      },
-      // modular multiplication of two numbers in montgomery form (i.e. montgomery multiplication)
-      bignum_f1m_mul: (aOffset, bOffset, rOffset) => {
-        const a = new BN(memget(mem, aOffset, 32), 'le')
-        const b = new BN(memget(mem, bOffset, 32), 'le')
-
-        var result = mulmodmont(a, b);
-
-        //console.log('bignum_f1m_mul a:', a.toString())
-        //console.log('bignum_f1m_mul b:', b.toString())
-        //console.log('bignum_f1m_mul result:', result.toString())
-
-        var result_le = result.toArrayLike(Buffer, 'le', 32);
-
-        memset(mem, rOffset, result_le)
-      },
-      bignum_f1m_square: (inOffset, outOffset) => {
-        const in_param = new BN(memget(mem, inOffset, 32), 'le');
-        var result = mulmodmont(in_param, in_param);
-
-        var result_le = result.toArrayLike(Buffer, 'le', 32)
-        memset(mem, outOffset, result_le)
-      },
-      bignum_f1m_add: (aOffset, bOffset, outOffset) => {
-        const a = new BN(memget(mem, aOffset, 32), 'le');
-        const b = new BN(memget(mem, bOffset, 32), 'le');
-        var result = addmod(a, b);
-
-        var result_le = result.toArrayLike(Buffer, 'le', 32)
-
-        memset(mem, outOffset, result_le)
-      },
-      bignum_f1m_sub: (aOffset, bOffset, outOffset) => {
-        const a = new BN(memget(mem, aOffset, 32), 'le');
-        const b = new BN(memget(mem, bOffset, 32), 'le');
-        var result = submod(a, b);
-
-        var result_le = result.toArrayLike(Buffer, 'le', 32)
-        memset(mem, outOffset, result_le)
-      },
-      bignum_f1m_toMontgomery: (inOffset, outOffset) => {
-        const in_param = new BN(memget(mem, inOffset, 32), 'le');
-
-        var result = mulmodmont(in_param, r_squared);
-        var result_le = result.toArrayLike(Buffer, 'le', 32)
-
-        memset(mem, outOffset, result_le)
-      },
-      bignum_f1m_fromMontgomery: (inOffset, outOffset) => {
-        const in_param = new BN(memget(mem, inOffset, 32), 'le');
-
-        var one = new BN('1', 16);
-        var result = mulmodmont(in_param, one);
-        var result_le = result.toArrayLike(Buffer, 'le', 32)
-
-        memset(mem, outOffset, result_le)
-      },
+      ...buildBnAPI(bn128_fields.fq, 'bignum_f1m'),
+      ...buildBnAPI(bn128_fields.fr, 'bignum_fr'),
       bignum_int_add: (aOffset, bOffset, outOffset) => {
         const a = new BN(memget(mem, aOffset, 32), 'le');
         const b = new BN(memget(mem, bOffset, 32), 'le');
