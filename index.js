@@ -26,7 +26,7 @@ let bn128_fields = {
         r_squared: new BN('06d89f71cab8351f47ab1eff0a417ff6b5e71911d44501fbf32cfc5b538afa89', 16)
     },
     'fr': {
-        field_modulus: new BN('21888242871839275222246405745257275088548364400416034343698204186575808495617', 16),
+        field_modulus: new BN('21888242871839275222246405745257275088548364400416034343698204186575808495617'),
         r_inv: new BN('6586864b4c6911b3c2e1f593efffffff', 16),
         r_squared: new BN('944936681149208446651664254269745548490766851729442924617792859073125903783')
 
@@ -123,6 +123,7 @@ function buildBnAPI(field, prefix) {
       result[prefix + '_toMontgomery'] = (inOffset, outOffset) => {
         const in_param = new BN(memget(mem, inOffset, 32), 'le');
 
+        //debugger
         var result = mulmodmont(in_param, field.r_squared, field);
         var result_le = result.toArrayLike(Buffer, 'le', 32)
 
