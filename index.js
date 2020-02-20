@@ -21,13 +21,13 @@ var memget = function(mem, offset, length) {
 
 let bn128_fields = {
     'fq': {
-        field_modulus: new BN('30644e72e131a029b85045b68181585d97816a916871ca8d3c208c16d87cfd47', 16),
-        r_inv: new BN('9ede7d651eca6ac987d20782e4866389', 16),
-        r_squared: new BN('06d89f71cab8351f47ab1eff0a417ff6b5e71911d44501fbf32cfc5b538afa89', 16)
+        field_modulus: new BN('21888242871839275222246405745257275088696311157297823662689037894645226208583'),
+        r_inv: new BN('211173256549385567650468519415768310665'),
+        r_squared: new BN('3096616502983703923843567936837374451735540968419076528771170197431451843209')
     },
     'fr': {
         field_modulus: new BN('21888242871839275222246405745257275088548364400416034343698204186575808495617'),
-        r_inv: new BN('6586864b4c6911b3c2e1f593efffffff', 16),
+        r_inv: new BN('134950519161967129512891662437158223871'),
         r_squared: new BN('944936681149208446651664254269745548490766851729442924617792859073125903783')
 
     }
@@ -88,6 +88,7 @@ function buildBnAPI(field, prefix) {
         //console.log('bignum_f1m_mul b:', b.toString())
         //console.log('bignum_f1m_mul result:', result.toString())
 
+        console.log(prefix + "_mul ", a.toString(), " * ", b.toString(), " = ", result.toString())
         var result_le = result.toArrayLike(Buffer, 'le', 32);
 
         memset(mem, rOffset, result_le)
@@ -127,6 +128,7 @@ function buildBnAPI(field, prefix) {
         var result = mulmodmont(in_param, field.r_squared, field);
         var result_le = result.toArrayLike(Buffer, 'le', 32)
 
+        console.log(prefix + "_toMontgomery ", in_param.toString(), " -> ", result.toString());
         memset(mem, outOffset, result_le)
       }
 
@@ -137,6 +139,7 @@ function buildBnAPI(field, prefix) {
         var result = mulmodmont(in_param, one, field);
         var result_le = result.toArrayLike(Buffer, 'le', 32)
 
+        console.log(prefix + "_fromMontgomery ", in_param.toString(), " -> ", result_le.toString());
         memset(mem, outOffset, result_le)
       }
 
