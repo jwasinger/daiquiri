@@ -4,6 +4,8 @@ const js_yaml = require("js-yaml");
 const BN = require('bn.js')
 const { TWO_POW256 } = require('ethereumjs-util')
 
+const TRACE_BN = false;
+
 let res = null;
 let mem = null;
 
@@ -88,7 +90,9 @@ function buildBnAPI(field, prefix) {
         //console.log('bignum_f1m_mul b:', b.toString())
         //console.log('bignum_f1m_mul result:', result.toString())
 
-        console.log(prefix + "_mul ", a.toString(), " * ", b.toString(), " = ", result.toString())
+        if (TRACE_BN) {
+            console.log(prefix + "_mul ", a.toString(), " * ", b.toString(), " = ", result.toString())
+        }
         var result_le = result.toArrayLike(Buffer, 'le', 32);
 
         memset(mem, rOffset, result_le)
@@ -128,7 +132,9 @@ function buildBnAPI(field, prefix) {
         var result = mulmodmont(in_param, field.r_squared, field);
         var result_le = result.toArrayLike(Buffer, 'le', 32)
 
-        console.log(prefix + "_toMontgomery ", in_param.toString(), " -> ", result.toString());
+        if (TRACE_BN) {
+            console.log(prefix + "_toMontgomery ", inOffset, " ", in_param.toString(), " -> ", outOffset, " ", result.toString());
+        }
         memset(mem, outOffset, result_le)
       }
 
@@ -139,17 +145,29 @@ function buildBnAPI(field, prefix) {
         var result = mulmodmont(in_param, one, field);
         var result_le = result.toArrayLike(Buffer, 'le', 32)
 
-        console.log(prefix + "_fromMontgomery ", in_param.toString(), " -> ", result_le.toString());
+        if (TRACE_BN) {
+            console.log(prefix + "_fromMontgomery ", inOffset, " ", in_param, " ", in_param.toString(), " -> ", result_le.toString());
+        }
         memset(mem, outOffset, result_le)
       }
 
       return result
 }
 
+function printMemHex(ptr, length) {
+    console.log(
+      "debug_printMemHex: ",
+      ptr,
+      length,
+      memget(mem, ptr, length).toString("hex")
+    );
+}
+
 function getImports(env) {
   return {
     env: {
       eth2_blockDataCopy: function(ptr, offset, length) {
+        console.log("eth2_blockDataCopy ", ptr, " ", offset, " ", length);
         memset(mem, ptr, env.blockData.slice(offset, offset + length));
       },
       eth2_loadPreStateRoot: function(dst) {
