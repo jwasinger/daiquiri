@@ -69,8 +69,10 @@ function mulmodmont(a, b, field) {
   var t = a.mul(b);
   var k0 = t.mul(field.r_inv).maskn(128);
   var res2 = k0.mul(field.field_modulus).add(t).shrn(128);
+
   var k1 = res2.mul(field.r_inv).maskn(128);
   var result = k1.mul(field.field_modulus).add(res2).shrn(128);
+
   if (result.gt(field.field_modulus)) {
     result = result.sub(field.field_modulus)
   }
@@ -102,6 +104,10 @@ function buildBnAPI(field, prefix) {
         const in_param = new BN(memget(mem, inOffset, 32), 'le');
         var result = mulmodmont(in_param, in_param, field);
 
+        if (TRACE_BN) {
+            console.log(prefix + '_square ', in_param.toString(), ' ', result.toString());
+        }
+
         var result_le = result.toArrayLike(Buffer, 'le', 32)
         memset(mem, outOffset, result_le)
       }
@@ -111,6 +117,10 @@ function buildBnAPI(field, prefix) {
         const b = new BN(memget(mem, bOffset, 32), 'le');
         var result = addmod(a, b, field);
 
+        if (TRACE_BN) {
+            console.log(prefix + '_add', a.toString(), ' + ', b.toString(), ' = ', result.toString());
+        }
+
         var result_le = result.toArrayLike(Buffer, 'le', 32)
 
         memset(mem, outOffset, result_le)
@@ -119,7 +129,12 @@ function buildBnAPI(field, prefix) {
       result[prefix + '_sub'] = (aOffset, bOffset, outOffset) => {
         const a = new BN(memget(mem, aOffset, 32), 'le');
         const b = new BN(memget(mem, bOffset, 32), 'le');
+        
         var result = submod(a, b, field);
+
+        if (TRACE_BN) {
+            console.log(prefix + '_sub', a.toString(), ' - ', b.toString(), ' = ', result.toString());
+        }
 
         var result_le = result.toArrayLike(Buffer, 'le', 32)
         memset(mem, outOffset, result_le)
@@ -128,7 +143,6 @@ function buildBnAPI(field, prefix) {
       result[prefix + '_toMontgomery'] = (inOffset, outOffset) => {
         const in_param = new BN(memget(mem, inOffset, 32), 'le');
 
-        //debugger
         var result = mulmodmont(in_param, field.r_squared, field);
         var result_le = result.toArrayLike(Buffer, 'le', 32)
 
@@ -229,6 +243,8 @@ function getImports(env) {
         const b = new BN(memget(mem, bOffset, 32), 'le');
         //const result = a.mul(b).maskn(256);
         const result = a.mul(b).mod(TWO_POW256);
+
+        console.log("int_mul", a.toString(), "*", b.toString(), "=", result.toString());
 
         const result_le = result.toArrayLike(Buffer, 'le', 32)
         memset(mem, outOffset, result_le)

@@ -42,12 +42,10 @@ function convertWebsnarkCallsInMainBN(mainWat) {
             bnUsingBignumFuncs = bnUsingBignumFuncs.replace(/call \$websnark_bn128\/bn128_frm_fromMontgomery/g, "call \$main/bignum_frm_fromMontgomery");
         }
 
-/*
         bnUsingBignumFuncs = bnUsingBignumFuncs.replace(/\(call \$int_mul/g, "\(call \$main/bignum_int_mul");
         bnUsingBignumFuncs = bnUsingBignumFuncs.replace(/\(call \$int_add/g, "\(call \$main/bignum_int_add");
         bnUsingBignumFuncs = bnUsingBignumFuncs.replace(/\(call \$int_sub/g, "\(call \$main/bignum_int_sub");
         bnUsingBignumFuncs = bnUsingBignumFuncs.replace(/\(call \$int_div/g, "\(call \$main/bignum_int_div");
-*/
 
         mainWat = bnUsingBignumFuncs;
 
