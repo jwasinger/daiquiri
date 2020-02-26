@@ -109,11 +109,11 @@ function deposit(input_data: usize, prestate_root: usize, out_root: usize): void
 
 function withdraw(input_data: usize, prestate_root: usize, out_root: usize): void {
     // TODO only update out_root after groth16_verify completes successfully
-    let groth_proof_start: usize = append_leaf(input_data, prestate_root, out_root, false);
-    debug_mem(groth_proof_start, SIZE_F);
+    //let groth_proof_start: usize = append_leaf(input_data, prestate_root, out_root, false);
+    //debug_mem(groth_proof_start, SIZE_F);
 
     // verify the withdraw post-state root is an input to the ZKP
-    let p_withdraw_root_circuit_input = groth_proof_start + 1348; // TODO: don't hardcode this offset
+    // let p_withdraw_root_circuit_input = groth_proof_start + 1348; // TODO: don't hardcode this offset
     let p_withdraw_root = input_data + SIZE_F;
 
     /*
@@ -125,6 +125,7 @@ function withdraw(input_data: usize, prestate_root: usize, out_root: usize): voi
     }
     */
 
+    let groth_proof_start: usize = 519997;
     if(groth16_verify(groth_proof_start) != 0) {
         debug_mem(2, SIZE_F);
         throw new Error("ZKP not validated");
@@ -144,7 +145,7 @@ export function main(): i32 {
 
     prestate_copy(prestate.buffer as usize);
 
-    mimc_init();
+    //mimc_init();
 
     if (selector == SELECTOR_DEPOSIT) {
         deposit(input_data_start, prestate.buffer as usize, result.buffer as usize);
