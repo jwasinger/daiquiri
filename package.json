@@ -4,9 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "npm run test:deposit && npm run test:withdraw",
-    "test:deposit": "node index.js tests/tests-deposit.yml",
-    "test:withdraw": "node index.js tests/tests-withdraw.yml",
+    "test": "npm run test:deposit && npm run test:withdraw && npm run test:withdraw-bn && npm run test:deposit-bn",
+    "test:bn": "npm run test:deposit-bn && npm run test:withdraw-bn",
+    "test:deposit": "node --wasm-interpret-all index.js tests/tests-deposit.yml",
+    "test:deposit-bn": "node --wasm-interpret-all index.js tests/tests-deposit-bn.yml",
+    "test:withdraw": "node --wasm-interpret-all index.js tests/tests-withdraw.yml",
+    "test:withdraw-bn": "node --wasm-interpret-all index.js tests/tests-withdraw-bn.yml",
     "build": "npx asc assembly/mixer/main.ts -b assembly/mixer/out/main.wasm -t assembly/mixer/out/main.wat --validate && cd assembly/mixer && gulp"
   },
   "repository": {
@@ -21,13 +24,15 @@
   },
   "homepage": "https://github.com/jwasinger/daiquiri#readme",
   "dependencies": {
+    "assemblyscript": "0.8.1",
+    "bn.js": "^5.1.1",
+    "circom": "0.0.34",
+    "circomlib": "0.0.20",
+    "ethereumjs-util": "^6.2.0",
     "gulp": "^4",
     "js-yaml": "^3.13.1",
     "snarkjs": "^0.1.20",
     "wabt": "1.0.11",
-    "websnark": "0.0.5",
-    "circom": "0.0.34",
-    "circomlib": "0.0.20",
-    "assemblyscript": "0.8.1"
+    "websnark": "0.0.5"
   }
 }

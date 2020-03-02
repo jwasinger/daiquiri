@@ -1,6 +1,6 @@
 beacon_state:
   execution_scripts:
-    - assembly/mixer/out/main_with_websnark.wasm
+    - assembly/mixer/out/main_with_websnark_bignum_hostfuncs.wasm
 shard_pre_state:
   exec_env_states:
     - 1a3912607947d9ce70ce8355d71f34a9d514184fbf34ac49792328c2f01a4525
