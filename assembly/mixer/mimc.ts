@@ -251,23 +251,95 @@ const round_constants: Array<u64> = [
 const num_round_constants = (round_constants.length / 4 );
 
 function mimc_cipher(xL_in: usize, xR_in: usize, k_in: usize, xL_out: usize, xR_out: usize): void {
-    for (let i = 0; i < num_rounds; i++) {
 
-        let c: usize = 0;
+     /****  do first round, i=0 ***/
+    let c: usize = 0;
+    c = ( round_constants.buffer as usize + SIZE_F * ( (0 - 1) % num_round_constants)) as usize;
+    //if ( i == 0 ) {
+      // t = k + kL_in;
+      //bn128_frm_add(k_in, xL_in, t);
+    //}
+    bn128_frm_add(k_in, xL_in, t);
+
+    // t2 = t * t
+    bn128_frm_mul(t,t,t2);
+    // t4 = t2 * t2;
+    bn128_frm_mul(t2,t2,t4);
+
+    //tmp = xL
+    //memcpy(tmp, xL);
+
+    bn128_frm_mul(t4, t, xL);
+
+    //if (i == 0) {
+    //    bn128_frm_add(xL, xR_in, xL);
+    //    memcpy(xR, xL_in);
+    //}
+    bn128_frm_add(xL, xR_in, xL);
+    //memcpy(xR, xL_in);
+
+
+    /**** do second round, i=1 ***/
+    c = ( round_constants.buffer as usize + SIZE_F * ( (1 - 1) % num_round_constants)) as usize;
+    // t = k + k[i-1] + c;
+    bn128_frm_add(c, xL, t);
+    bn128_frm_add(t, k_in, t);
+
+    // t2 = t * t
+    bn128_frm_mul(t,t,t2);
+
+    // t4 = t2 * t2;
+    bn128_frm_mul(t2,t2,t4);
+
+    //tmp = xL
+    //memcpy(tmp, xL);
+    // xR = xL
+    memcpy(xR, xL);
+
+    bn128_frm_mul(t4, t, xL);
+
+    bn128_frm_add(xL, xL_in, xL);
+    //memcpy(xR, tmp);
+
+
+    /**** do third round, i=2 and up to num_rounds - 2 */
+
+    for (let i = 2; i < num_rounds - 2; i++) {
+
+        c = ( round_constants.buffer as usize + SIZE_F * ( (i - 1) % num_round_constants)) as usize;
+
+        // t = k + k[i-1] + c;
+        bn128_frm_add(c, xL, t);
+        bn128_frm_add(t, k_in, t);
+
+        // t2 = t * t
+        bn128_frm_mul(t,t,t2);
+
+        // t4 = t2 * t2;
+        bn128_frm_mul(t2,t2,t4);
+
+        //tmp = xL
+        memcpy(tmp, xL);
+
+        bn128_frm_mul(t4, t, xL);
+
+        bn128_frm_add(xL, xR, xL);
+        memcpy(xR, tmp);
+    }
+
+
+    // do i=num_rounds-2 and i=num_rounds-1
+    for (let i = num_rounds - 2; i < num_rounds; i++) {
+
         if (i == num_rounds - 1) {
             c = zero;
         } else {
             c = ( round_constants.buffer as usize + SIZE_F * ( (i - 1) % num_round_constants)) as usize;
         }
 
-        if ( i == 0 ) {
-          // t = k + kL_in;
-          bn128_frm_add(k_in, xL_in, t);
-        } else {
-          // t = k + k[i-1] + c;
-          bn128_frm_add(c, xL, t);
-          bn128_frm_add(t, k_in, t);
-        }
+        // t = k + k[i-1] + c;
+        bn128_frm_add(c, xL, t);
+        bn128_frm_add(t, k_in, t);
 
         // t2 = t * t
         bn128_frm_mul(t,t,t2);
@@ -281,13 +353,8 @@ function mimc_cipher(xL_in: usize, xR_in: usize, k_in: usize, xL_out: usize, xR_
 
           bn128_frm_mul(t4, t, xL);
 
-          if (i == 0) {
-              bn128_frm_add(xL, xR_in, xL);
-              memcpy(xR, xL_in);
-          } else {
-              bn128_frm_add(xL, xR, xL);
-              memcpy(xR, tmp);
-          }
+          bn128_frm_add(xL, xR, xL);
+          memcpy(xR, tmp);
         } else {
           // xL_out = xL;
           memcpy(xL_out, xL);
@@ -297,6 +364,8 @@ function mimc_cipher(xL_in: usize, xR_in: usize, k_in: usize, xL_out: usize, xR_
           bn128_frm_add(xR_out, xR, xR_out);
         }
     }
+
+
 }
 
 // everything argument other than num_inputs, num_outputs is a pointer

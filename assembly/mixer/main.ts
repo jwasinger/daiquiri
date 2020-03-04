@@ -44,9 +44,13 @@ export function main(): i32 {
 
     mimc_init();
 
-    for (let i = 0; i < 2000; i++) {
+    for (let i = 0; i < 200; i++) {
         mimc_compress2(NULL_ROOT.buffer as usize, cur, cur);
     }
+
+    let example_output = new Uint8Array(SIZE_F);
+    example_output[0] = 55;
+    save_output(cur);
 
     return 0;
 }
