@@ -245,6 +245,9 @@ function getImports(env) {
 
         memset(mem, cOffset, result_quotient_le)
         memset(mem, rOffset, result_remainder_le)
+      },
+      memcpy: (dst, src) => {
+          memset(mem, dst, memget(mem, src, 32));
       }
     }
   };

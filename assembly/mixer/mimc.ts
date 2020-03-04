@@ -1,6 +1,9 @@
 import { bn128_frm_zero, bn128_fr_mul, bn128_frm_fromMontgomery, bn128_frm_toMontgomery, bn128_frm_mul, bn128_frm_add, bn128_g1m_toMontgomery, bn128_g2m_toMontgomery, bn128_g1m_neg, bn128_ftm_one, bn128_pairingEq4, bn128_g1m_timesScalar, bn128_g1m_add, bn128_g1m_affine, bn128_g1m_neg} from "./websnark_bn128";
 
-import { SIZE_F, memcpy } from "./util.ts";
+import { SIZE_F } from "./util.ts";
+
+@external("env", "memcpy")
+export declare function memcpy(dst: i32, src: i32): void;
 
 export const NULL_HASH: Array<u64> = [
     0x249685ed4899af6c, 0x821b340f76e741e2, 0x343a35b6eba15db4, 0x2fe54c60d3acabf3,
