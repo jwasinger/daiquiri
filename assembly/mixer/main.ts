@@ -40,23 +40,13 @@ export declare function save_output(offset: i32): void;
 
 // TODO make all numbers in the proof expected to be passed in montgomery form
 export function main(): i32 {
-    let input_data_len = input_size();
-    let input_data_buff = new ArrayBuffer(input_data_len);
-    input_data_copy(input_data_buff as usize, 0, input_data_len);
-
-    let selector = load<u8>(input_data_buff as usize); 
-    let prestate = new Uint8Array(SIZE_F);
-    let result = new Uint8Array(SIZE_F);
     let cur = (new Uint8Array(SIZE_F)).buffer as usize;
 
-    prestate_copy(prestate.buffer as usize);
     mimc_init();
 
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 2000; i++) {
         mimc_compress2(NULL_ROOT.buffer as usize, cur, cur);
     }
-
-    save_output(result.buffer as usize);
 
     return 0;
 }
