@@ -1,9 +1,9 @@
 import { bn128_frm_zero, bn128_fr_mul, bn128_frm_fromMontgomery, bn128_frm_toMontgomery, bn128_frm_mul, bn128_frm_add, bn128_g1m_toMontgomery, bn128_g2m_toMontgomery, bn128_g1m_neg, bn128_ftm_one, bn128_pairingEq4, bn128_g1m_timesScalar, bn128_g1m_add, bn128_g1m_affine, bn128_g1m_neg} from "./websnark_bn128";
 
-import { SIZE_F } from "./util.ts";
+import { SIZE_F, memcpy } from "./util.ts";
 
-@external("env", "memcpy")
-export declare function memcpy(dst: i32, src: i32): void;
+//@external("env", "memcpy")
+//export declare function memcpy(dst: i32, src: i32): void;
 
 export const NULL_HASH: Array<u64> = [
     0x249685ed4899af6c, 0x821b340f76e741e2, 0x343a35b6eba15db4, 0x2fe54c60d3acabf3,
@@ -439,20 +439,22 @@ export function mimc_compress2(left: usize, right: usize, result: usize): void {
     bn128_frm_zero(k);
 
     // xL_in = inputs[0]
-    memcpy(xL_in, left);
+    //memcpy(xL_in, left);
 
     // xR_in = 0
     bn128_frm_zero(xR_in);
 
-    mimc_cipher(xL_in, xR_in, k, xL_out, xR_out);
+    //mimc_cipher(xL_in, xR_in, k, xL_out, xR_out);
+    mimc_cipher(left, xR_in, k, xL_out, xR_out);
 
     // xL_in = xL_out + inputs[i]
     bn128_frm_add(xL_out, right, xL_in);
 
     // xR_in = xR_out
-    memcpy(xR_in, xR_out);
+    //memcpy(xR_in, xR_out);
 
-    mimc_cipher(xL_in, xR_in, k, xL_out, xR_out);
+    //mimc_cipher(xL_in, xR_in, k, xL_out, xR_out);
+    //memcpy(result, xL_out);
 
-    memcpy(result, xL_out);
+    mimc_cipher(xL_in, xR_out, k, result, xR_out);
 }
