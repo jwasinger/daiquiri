@@ -300,7 +300,7 @@ function mimc_cipher(xL_in: usize, xR_in: usize, k_in: usize, xL_out: usize, xR_
     //tmp = xL
     //memcpy(tmp, xL);
     // xR = xL
-    memcpy(xR, (xLresultTable + SIZE_F*0));
+    //memcpy(xR, (xLresultTable + SIZE_F*0));
 
     //bn128_frm_mul(t4, t, xL);
     bn128_frm_mul(t4, t, (xLresultTable + SIZE_F*1));
@@ -328,55 +328,62 @@ function mimc_cipher(xL_in: usize, xR_in: usize, k_in: usize, xL_out: usize, xR_
         bn128_frm_mul(t2,t2,t4);
 
         //tmp = xL
-        memcpy(tmp, (xLresultTable + SIZE_F*(i-1)));
+        //memcpy(tmp, (xLresultTable + SIZE_F*(i-1)));
 
         bn128_frm_mul(t4, t, (xLresultTable + SIZE_F*i));
 
         bn128_frm_add((xLresultTable + SIZE_F*i), (xLresultTable + SIZE_F*(i-2)), (xLresultTable + SIZE_F*i));
-        memcpy(xL, (xLresultTable + SIZE_F*i));
-        memcpy(xR, tmp);
+        //memcpy(xL, (xLresultTable + SIZE_F*i));
+        //memcpy(xR, tmp);
     }
 
 
-    // do i=num_rounds-2 and i=num_rounds-1
-    for (let i = num_rounds - 2; i < num_rounds; i++) {
+    /**** do i=num_rounds-2 ***/
+    let i = num_rounds - 2;
+    c = ( round_constants.buffer as usize + SIZE_F * ( (i - 1) % num_round_constants)) as usize;
 
-        if (i == num_rounds - 1) {
-            c = zero;
-        } else {
-            c = ( round_constants.buffer as usize + SIZE_F * ( (i - 1) % num_round_constants)) as usize;
-        }
+    // t = k + k[i-1] + c;
+    //bn128_frm_add(c, xL, t);
+    bn128_frm_add(c, (xLresultTable + SIZE_F*(i-1)), t);
+    bn128_frm_add(t, k_in, t);
 
-        // t = k + k[i-1] + c;
-        //bn128_frm_add(c, xL, t);
-        bn128_frm_add(c, (xLresultTable + SIZE_F*(i-1)), t);
-        bn128_frm_add(t, k_in, t);
+    // t2 = t * t
+    bn128_frm_mul(t,t,t2);
 
-        // t2 = t * t
-        bn128_frm_mul(t,t,t2);
+    // t4 = t2 * t2;
+    bn128_frm_mul(t2,t2,t4);
 
-        // t4 = t2 * t2;
-        bn128_frm_mul(t2,t2,t4);
+    //tmp = xL
+    //memcpy(tmp, xL);
 
-        if ( i < num_rounds - 1 ) {
-          //tmp = xL
-          //memcpy(tmp, xL);
+    bn128_frm_mul(t4, t, (xLresultTable + SIZE_F*i));
 
-          bn128_frm_mul(t4, t, (xLresultTable + SIZE_F*i));
+    //bn128_frm_add((xLresultTable + SIZE_F*i), (xLresultTable + SIZE_F*(i-2)), (xLresultTable + SIZE_F*i));
+    //bn128_frm_add((xLresultTable + SIZE_F*i), (xLresultTable + SIZE_F*(i-2)), (xLresultTable + SIZE_F*i));
+    bn128_frm_add((xLresultTable + SIZE_F*i), (xLresultTable + SIZE_F*(i-2)), xL_out);
+    //memcpy(xR, tmp);
 
-          //bn128_frm_add((xLresultTable + SIZE_F*i), (xLresultTable + SIZE_F*(i-2)), (xLresultTable + SIZE_F*i));
-          bn128_frm_add((xLresultTable + SIZE_F*i), (xLresultTable + SIZE_F*(i-2)), (xLresultTable + SIZE_F*i));
-          //memcpy(xR, tmp);
-        } else {
-          // xL_out = xL;
-          memcpy(xL_out, (xLresultTable + SIZE_F*(i-1)));
-          
-          // xR_out = xR + t4 * t
-          bn128_frm_mul(t4, t, xR_out);
-          bn128_frm_add(xR_out, (xLresultTable + SIZE_F*(i-2)), xR_out);
-        }
-    }
 
+    /**** do i=num_rounds-1 ***/
+    i = num_rounds - 1;
+    c = zero;
+
+    // t = k + k[i-1] + c;
+    //bn128_frm_add(c, xL, t);
+    bn128_frm_add(c, xL_out, t);
+    bn128_frm_add(t, k_in, t);
+
+    // t2 = t * t
+    bn128_frm_mul(t,t,t2);
+
+    // t4 = t2 * t2;
+    bn128_frm_mul(t2,t2,t4);
+
+    //memcpy(xL_out, (xLresultTable + SIZE_F*(i-1)));
+
+    // xR_out = xR + t4 * t
+    bn128_frm_mul(t4, t, xR_out);
+    bn128_frm_add(xR_out, (xLresultTable + SIZE_F*(i-2)), xR_out);
 
 }
 
