@@ -18,13 +18,13 @@ import { merkle_proof_init, compute_root } from "./merkle_tree.ts";
 
 import { mimc_compress2 } from "./mimc.ts";
 
-import { memcmp } from "./util.ts";
+import { memcmp, memcpy } from "./util.ts";
 
 @external("env", "debug_printMemHex")
 export declare function debug_mem(pos: i32, len: i32): void;
 
-@external("env", "memcpy")
-export declare function memcpy(dst: i32, src: i32): void;
+//@external("env", "memcpy")
+//export declare function memcpy(dst: i32, src: i32): void;
 
 @external("env", "eth2_blockDataSize")
 export declare function input_size(): i32;
