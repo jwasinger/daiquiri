@@ -149,12 +149,9 @@ export function main(): i32 {
 
     mimc_init();
 
-    if (selector == SELECTOR_DEPOSIT) {
-        deposit(input_data_start, prestate.buffer as usize, result.buffer as usize);
-    } else if(selector == SELECTOR_WITHDRAW) {
-        withdraw(input_data_start, prestate.buffer as usize, result.buffer as usize);
-    } else {
-        throw new Error("invalid selector (not deposit or withdraw)");
+    if(groth16_verify(input_data_buff as usize) != 0) {
+        debug_mem(2, SIZE_F);
+        throw new Error("ZKP not validated");
     }
 
     save_output(result.buffer as usize);

@@ -9,7 +9,7 @@
     "test:deposit": "node --wasm-interpret-all index.js tests/tests-deposit.yml",
     "test:deposit-bn": "node --wasm-interpret-all index.js tests/tests-deposit-bn.yml",
     "test:withdraw": "node --wasm-interpret-all index.js tests/tests-withdraw.yml",
-    "test:withdraw-bn": "node --wasm-interpret-all index.js tests/tests-withdraw-bn.yml",
+    "test:groth16_verify": "node --wasm-interpret-all index.js tests/tests-groth16-verify.yml",
     "build": "npx asc assembly/mixer/main.ts -b assembly/mixer/out/main.wasm -t assembly/mixer/out/main.wat --validate && cd assembly/mixer && gulp"
   },
   "repository": {
