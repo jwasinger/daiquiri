@@ -182,6 +182,7 @@ function getImports(env) {
         );
       },
       eth2_savePostStateRoot: function(ptr) {
+        console.log('eth2_savePostStateRoot..')
         res = memget(mem, ptr, 32);
       },
       eth2_blockDataSize: function() {
