@@ -10,6 +10,7 @@ export declare function debug_mem(pos: i32, len: i32): void;
 // bn128 point size
 export const ROOT_OFFSET = 0;
 
+/*
 export function verify_merkle_proof(p_proof: usize): u32 {
     let p_computed_root = (new Uint8Array(SIZE_F)).buffer as usize;
     let p_proof_root = p_proof + ROOT_OFFSET;
@@ -18,6 +19,7 @@ export function verify_merkle_proof(p_proof: usize): u32 {
 
     return memcmp(p_computed_root, p_proof_root);
 }
+*/
 
 // convert all the field elements in the proof to montgomery form
 export function merkle_proof_init(p_proof: usize): usize {
@@ -44,17 +46,7 @@ export function merkle_proof_init(p_proof: usize): usize {
     return leaf + SIZE_F;
 }
 
-export function get_proof_size(p_proof: usize): usize {
-    // TODO
-}
-
-// computes the merkle root and modifies the proof root
-export function compute_proof(p_proof: usize): void {
-    let p_proof_root = p_proof + ROOT_OFFSET;
-    compute_root(p_proof, p_proof_root);
-}
-
-export function compute_root(p_proof: usize, p_out_root: usize): usize {
+export function compute_root(p_proof: usize, p_out_root: usize, trie_mode: bool): usize {
     let root = ( p_proof as usize ); 
 
     // TODO: index/num_witnesses are serialized as u64 and casted to usize which could cause overflow.
@@ -67,24 +59,43 @@ export function compute_root(p_proof: usize, p_out_root: usize): usize {
 
     let leaf: usize = witnesses + ( num_witnesses as usize * SIZE_F );
 
+    bn128_frm_fromMontgomery(leaf, leaf);
+
+    // TODO don't hardcode tree depth here
+    // last TREE_HEIGHT (hardcoded to 20) bits in the leaf value define the index in the trie
+    let leaf_position_target = load<u32>(leaf + 28) >> 12;
+
+    bn128_frm_toMontgomery(leaf, leaf);
+
+    let leaf_position_calculated: u32 = 0;
+
     if (selector == 0) {
         mimc_compress2(leaf, witnesses, p_out_root);
     } else {
         mimc_compress2(witnesses, leaf, p_out_root);
+        leaf_position_calculated += 1;
     }
 
     p_selectors++;
     selector = load<u8>(p_selectors);
 
+    let ll: u32 = 1
+
     for (let i: usize = 1; i < num_witnesses; i++) {
+        ll *= 2;
         if (selector == 0) {
             mimc_compress2(p_out_root, witnesses + i * SIZE_F, p_out_root);
         } else {
             mimc_compress2(witnesses + i * SIZE_F, p_out_root, p_out_root);
+            leaf_position_calculated += ll;
         }
 
         p_selectors++;
         selector = load<u8>(p_selectors);
+    }
+
+    if(trie_mode && leaf_position_target != leaf_position_calculated) {
+        throw new Error("trie: leaf not at correct position");
     }
 
     return witnesses + SIZE_F * num_witnesses as usize;
