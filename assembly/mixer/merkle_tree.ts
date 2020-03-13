@@ -41,23 +41,10 @@ export function merkle_proof_init(p_proof: usize): usize {
     let tmp2: usize = (new Uint8Array(SIZE_F)).buffer as usize;
 
     let leaf: usize = witnesses + ( num_witnesses as usize * SIZE_F );
-    debug_mem(leaf, SIZE_F);
     bn128_frm_toMontgomery(leaf, leaf);
 
     return leaf + SIZE_F;
 }
-
-export function get_proof_size(p_proof: usize): usize {
-    // TODO
-}
-
-// computes the merkle root and modifies the proof root
-/*
-export function compute_proof(p_proof: usize): void {
-    let p_proof_root = p_proof + ROOT_OFFSET;
-    compute_root(p_proof, p_proof_root);
-}
-*/
 
 export function compute_root(p_proof: usize, p_out_root: usize, trie_mode: bool): usize {
     let root = ( p_proof as usize ); 
@@ -72,13 +59,14 @@ export function compute_root(p_proof: usize, p_out_root: usize, trie_mode: bool)
 
     let leaf: usize = witnesses + ( num_witnesses as usize * SIZE_F );
 
-    // tree depth is 20, so the max position in the tree can only be 2**20 - 1
     bn128_frm_fromMontgomery(leaf, leaf);
-    let leaf_position_target = load<u32>(leaf) >> 12;
-    debug_mem(leaf, SIZE_F);
+
+    // TODO don't hardcode tree depth here
+    // last TREE_HEIGHT (hardcoded to 20) bits in the leaf value define the index in the trie
+    let leaf_position_target = load<u32>(leaf + 28) >> 12;
+
     bn128_frm_toMontgomery(leaf, leaf);
 
-    let trie_mode = true;
     let leaf_position_calculated: u32 = 0;
 
     if (selector == 0) {
@@ -91,7 +79,7 @@ export function compute_root(p_proof: usize, p_out_root: usize, trie_mode: bool)
     p_selectors++;
     selector = load<u8>(p_selectors);
 
-    let ll: u32 = 2
+    let ll: u32 = 1
 
     for (let i: usize = 1; i < num_witnesses; i++) {
         ll *= 2;
@@ -107,9 +95,6 @@ export function compute_root(p_proof: usize, p_out_root: usize, trie_mode: bool)
     }
 
     if(trie_mode && leaf_position_target != leaf_position_calculated) {
-        //debug_mem(420, leaf_position_target);
-        //debug_mem(420, leaf_position_calculated);
-        //debug_mem(leaf, SIZE_F);
         throw new Error("trie: leaf not at correct position");
     }
 

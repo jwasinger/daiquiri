@@ -73,7 +73,7 @@ function append_leaf(input_data: usize, p_prestate_root: usize, out_root: usize,
     memcpy(p_mixer_root, p_prestate_root);
     memcpy(p_proof_leaf, p_NULL_HASH);
 
-    compute_root(p_merkle_proof, p_merkle_root, !is_deposit);
+    compute_root(p_merkle_proof, p_merkle_root, false);
     
     if (is_deposit) {
         mimc_compress2(p_merkle_root, p_last_witness, tmp3);
@@ -113,7 +113,6 @@ function deposit(input_data: usize, prestate_root: usize, out_root: usize): void
 function withdraw(input_data: usize, prestate_root: usize, out_root: usize): void {
     // TODO only update out_root after groth16_verify completes successfully
     let groth_proof_start: usize = append_leaf(input_data, prestate_root, out_root, false);
-    debug_mem(groth_proof_start, SIZE_F);
 
     // verify the withdraw post-state root is an input to the ZKP
     let p_withdraw_root_circuit_input = groth_proof_start + 1348; // TODO: don't hardcode this offset
